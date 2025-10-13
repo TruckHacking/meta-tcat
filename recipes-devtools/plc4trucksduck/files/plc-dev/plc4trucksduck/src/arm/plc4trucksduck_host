@@ -42,8 +42,8 @@ PAYLOAD_LEN = 255
 PRU_FW_PATH = "/lib/firmware/am335x-pru0-fw"    
 REMOTE_PROC_PATH = "/sys/class/remoteproc/remoteproc1"
 
-SERVER_PORT = 6969  # UDP port to receive data (from network)
-CLIENT_PORT = 6970  # UDP port to send data (to clients)
+SERVER_PORT = 6971  # UDP port to receive data (from network)
+CLIENT_PORT = 6972  # UDP port to send data (to clients)
 
 exit_event = threading.Event()
 rx_event = threading.Event()
