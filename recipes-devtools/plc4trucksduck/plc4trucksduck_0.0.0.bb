@@ -1,4 +1,4 @@
-DESCRIPTION = "PLC4TRUCKSDUCK installation for the UTHP"
+DESCRIPTION = "PLC4TRUCKSDUCK service for TCAT"
 LICENSE = "MIT"
 
 SRC_URI += " file://plc-dev"
