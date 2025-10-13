@@ -1,7 +1,7 @@
 #!/bin/bash
 
 YOCTO_DIR="Yocto"
-LOG_FILE="meta-uthp-setup.log"
+LOG_FILE="tcat-layers-setup.log"
 
 exec > >(tee -a "$LOG_FILE") 2>&1
 
@@ -11,73 +11,71 @@ function handle_error() {
     exit 1
 }
 
+SCARTHGAP_TAG="scarthgap-5.0.12"
 function clone_and_checkout() {
     echo -e "\n==> Cloning and checking out layers... (please be patient as this takes some time)\n"
 
     # Clone and checkout poky if the directory does not exist or the directory is empty
     if [ ! -d "$FULL_YOCTO_DIR/" ] || [ -z "$(ls -A $FULL_YOCTO_DIR/)" ]; then
         git clone git://git.yoctoproject.org/poky.git "$FULL_YOCTO_DIR/" || handle_error $LINENO
-        cd "$FULL_YOCTO_DIR/" || handle_error $LINENO
-        git checkout scarthgap || handle_error $LINENO
-        pwd || handle_error $LINENO
-    else
-        echo "Directory $FULL_YOCTO_DIR/ already exists, skipping clone."
     fi
+    cd "$FULL_YOCTO_DIR/" || handle_error $LINENO
+    git checkout ${SCARTHGAP_TAG} || handle_error $LINENO
+    pwd || handle_error $LINENO
 
     # Clone and checkout meta-openembedded
     if [ ! -d "$FULL_YOCTO_DIR/meta-openembedded" ]; then
         git clone git://git.openembedded.org/meta-openembedded "$FULL_YOCTO_DIR/meta-openembedded" || handle_error $LINENO
-        cd "$FULL_YOCTO_DIR/meta-openembedded" || handle_error $LINENO
-        git checkout scarthgap || handle_error $LINENO
-        cd "$FULL_YOCTO_DIR" || handle_error $LINENO
-    else
-        echo "Directory $FULL_YOCTO_DIR/meta-openembedded already exists, skipping clone."
     fi
+    cd "$FULL_YOCTO_DIR/meta-openembedded" || handle_error $LINENO
+    # scarthgap branch commit as of 20251011
+    git checkout e621da9470 || handle_error $LINENO
+    cd "$FULL_YOCTO_DIR" || handle_error $LINENO
 
     # Clone meta-python2
     if [ ! -d "$FULL_YOCTO_DIR/meta-python2" ]; then
         git clone git://git.openembedded.org/meta-python2 "$FULL_YOCTO_DIR/meta-python2" || handle_error $LINENO
-    else
-        echo "Directory $FULL_YOCTO_DIR/meta-python2 already exists, skipping clone."
     fi
+    cd "$FULL_YOCTO_DIR/meta-python2" || handle_error $LINENO
+    # main/master branch commit as of 20251011
+    git checkout 1358cdb || handle_error $LINENO
+    cd - || handle_error $LINENO
 
     # Clone meta-jupyter
     if [ ! -d "$FULL_YOCTO_DIR/meta-jupyter" ]; then
         git clone https://github.com/Xilinx/meta-jupyter "$FULL_YOCTO_DIR/meta-jupyter" || handle_error $LINENO
-    else
-        echo "Directory $FULL_YOCTO_DIR/meta-jupyter already exists, skipping clone."
     fi
+    cd "$FULL_YOCTO_DIR/meta-jupyter" || handle_error $LINENO
+    # master/main branch as of 20251011
+    git checkout d965100 || handle_error $LINENO
+    cd - || handle_error $LINENO
 
     # Clone and checkout meta-arm
     if [ ! -d "$FULL_YOCTO_DIR/meta-arm" ]; then
         git clone git://git.yoctoproject.org/meta-arm "$FULL_YOCTO_DIR/meta-arm" || handle_error $LINENO
-        cd "$FULL_YOCTO_DIR/meta-arm" || handle_error $LINENO
-        git checkout scarthgap || handle_error $LINENO
-        cd "$FULL_YOCTO_DIR" || handle_error $LINENO
-    else
-        echo "Directory $FULL_YOCTO_DIR/meta-arm already exists, skipping clone."
     fi
+    cd "$FULL_YOCTO_DIR/meta-arm" || handle_error $LINENO
+    # scarthgap branch commit as of 20251011
+    git checkout 0f1e7bf9 || handle_error $LINENO
+    cd "$FULL_YOCTO_DIR" || handle_error $LINENO
 
     # Clone and checkout meta-ti
     if [ ! -d "$FULL_YOCTO_DIR/meta-ti" ]; then
         git clone git://git.yoctoproject.org/meta-ti "$FULL_YOCTO_DIR/meta-ti" || handle_error $LINENO
-        cd "$FULL_YOCTO_DIR/meta-ti" || handle_error $LINENO
-        git checkout scarthgap || handle_error $LINENO
-        cd "$FULL_YOCTO_DIR" || handle_error $LINENO
-    else
-        echo "Directory $FULL_YOCTO_DIR/meta-ti already exists, skipping clone."
     fi
+    cd "$FULL_YOCTO_DIR/meta-ti" || handle_error $LINENO
+    # last version before update to kernel 6.12
+    git checkout 11.00.14 || handle_error $LINENO
+    cd "$FULL_YOCTO_DIR" || handle_error $LINENO
 
     # Clone and checkout meta-uthp
     if [ ! -d "$FULL_YOCTO_DIR/meta-uthp" ]; then
         git clone https://github.com/SystemsCyber/meta-uthp "$FULL_YOCTO_DIR/meta-uthp" || handle_error $LINENO
-        cd "$FULL_YOCTO_DIR/meta-uthp" || handle_error $LINENO
-        git checkout scarthgap || handle_error $LINENO
-        cd "$FULL_YOCTO_DIR" || handle_error $LINENO
-    else
-        echo "Directory $FULL_YOCTO_DIR/meta-uthp already exists, skipping clone."
     fi
-
+    cd "$FULL_YOCTO_DIR/meta-uthp" || handle_error $LINENO
+    # TODO change to a tag
+    git checkout scarthgap || handle_error $LINENO
+    cd "$FULL_YOCTO_DIR" || handle_error $LINENO
 }
 
 echo -e "\n==>Installing necessary packages...\n"
