@@ -40,3 +40,6 @@ EXTRA_IMAGE_FEATURES += " package-management bash-completion-pkgs"
 DISTRO ?= "TruckHackingOS"
 # needs to be named beagle.* to override the default beaglebone.conf
 MACHINE ?= "uthp"
+
+# include buildinfo in the image for traceability
+INHERIT += "image-buildinfo"
