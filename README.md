@@ -59,7 +59,7 @@ Download the uthp-setup-dev-env.sh script:
 wget https://github.com/SystemsCyber/meta-uthp/raw/scarthgap/uthp-setup-dev-env.sh
 ```
 Run it:
-> Note: Performed as root user within Linux env.
+> Note: Performed as user with passwordless sudo within Linux env.
 ```shell
 chmod +x uthp-setup-dev-env.sh
 ./uthp-setup-dev-env.sh
@@ -71,7 +71,9 @@ source oe-init-build-env
 ```
 
 Then you can build the image:
-> Note: you need to have all the standards (e.g., J1939db.json) under the same location so our recipe can pull them. Otherwise delete or modify the [base files recipe](./recipes-core/base-files/base-files_%.bbappend)
+> IMPORTANT: you need to have all the standards (e.g., J1939db.json) under the same location so our recipe can pull them. Otherwise delete or modify the [base files recipe](./recipes-core/base-files/)
+> Copy the files that you have with e.g. `cp ../../../*.json meta-uthp/recipes-core/base-files/files/; cp ../../../*.pdf.txt meta-uthp/recipes-core/base-files/files/`
+> The files must be generated from the SAE PDFs as described in the pretty-j1939 and pretty_j1587 projects.
 
 
 ```shell
