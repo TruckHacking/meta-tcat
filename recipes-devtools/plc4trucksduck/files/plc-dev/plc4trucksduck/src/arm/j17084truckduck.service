@@ -12,4 +12,5 @@ Environment=PYTHONUNBUFFERED=1
 
 
 [Install]
-WantedBy=multi-user.target
+# start PLC service by default (only one of the two can run concurrently)
+#WantedBy=multi-user.target
