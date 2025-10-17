@@ -13,7 +13,7 @@ inherit python3native
 # chmod -R 755 ${D}${TARGET_DIR}
 # chown -R 1000:1000 ${D}${TARGET_DIR}
 
-TARGET_DIR = "/opt/uthp/programs/cmap"
+TARGET_DIR = "/opt/tcat/programs/cmap"
 
 do_install() {
     install -d ${D}${TARGET_DIR}

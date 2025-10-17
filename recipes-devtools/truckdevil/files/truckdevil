@@ -1,4 +1,4 @@
 #!/bin/bash
-pushd /opt/uthp/programs/truckdevil/ > /dev/null
+pushd /opt/tcat/programs/truckdevil/ > /dev/null
 ./truckdevil.py "$@"
 popd > /dev/null

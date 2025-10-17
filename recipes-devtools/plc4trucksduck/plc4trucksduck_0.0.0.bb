@@ -3,7 +3,7 @@ LICENSE = "MIT"
 
 SRC_URI += " file://plc-dev"
 
-TARGET_DIR = "/opt/uthp/programs/plc-dev"
+TARGET_DIR = "/opt/tcat/programs/plc-dev"
 
 inherit systemd
 SYSTEMD_SERVICE:${PN} = "plc4trucksduck.service"

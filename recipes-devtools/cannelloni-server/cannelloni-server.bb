@@ -1,6 +1,6 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 DESCRIPTION = "Cannelloni Server Service for UTHP"
-SUMMARY = "Must be configured with /opt/uthp/scripts/cannelloni-server/cannelloni-server.conf"
+SUMMARY = "Must be configured with /opt/tcat/scripts/cannelloni-server/cannelloni-server.conf"
 LICENSE = "MIT"
 
 SRC_URI = "file://start.sh \
@@ -9,14 +9,14 @@ SRC_URI = "file://start.sh \
           "
 
 do_install() {
-    install -d ${D}/opt/uthp/scripts/cannelloni-server
-    install -m 0755 ${WORKDIR}/start.sh ${D}/opt/uthp/scripts/cannelloni-server
-    install -m 0644 ${WORKDIR}/cannelloni-server.conf ${D}/opt/uthp/scripts/cannelloni-server
+    install -d ${D}/opt/tcat/scripts/cannelloni-server
+    install -m 0755 ${WORKDIR}/start.sh ${D}/opt/tcat/scripts/cannelloni-server
+    install -m 0644 ${WORKDIR}/cannelloni-server.conf ${D}/opt/tcat/scripts/cannelloni-server
     install -d ${D}/etc/systemd/system
     install -m 0644 ${WORKDIR}/spawn-cannelloni-server.service ${D}/etc/systemd/system
 }
 
-FILES:${PN} += "/opt/uthp/scripts/cannelloni-server/* \
+FILES:${PN} += "/opt/tcat/scripts/cannelloni-server/* \
                 /etc/systemd/system/spawn-cannelloni-server.service \
                "
 

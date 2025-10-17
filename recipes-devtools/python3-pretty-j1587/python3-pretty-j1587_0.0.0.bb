@@ -16,13 +16,13 @@ S = "${WORKDIR}/git"
 RDEPENDS:${PN} += "python3-core python3 python"
 
 do_install() {
-    install -d ${D}/opt/uthp/programs/pretty_j1587
+    install -d ${D}/opt/tcat/programs/pretty_j1587
     install -d ${D}/usr/bin
 
-    cp -r ${S}/* ${D}/opt/uthp/programs/pretty_j1587
-    install -m 0644 ${WORKDIR}/config.cfg ${D}/opt/uthp/programs/pretty_j1587
+    cp -r ${S}/* ${D}/opt/tcat/programs/pretty_j1587
+    install -m 0644 ${WORKDIR}/config.cfg ${D}/opt/tcat/programs/pretty_j1587
 
-    ln -s /opt/uthp/programs/pretty_j1587/pretty_j1587.py ${D}/usr/bin/pretty_j1587
+    ln -s /opt/tcat/programs/pretty_j1587/pretty_j1587.py ${D}/usr/bin/pretty_j1587
 }
 
-FILES:${PN} += "/opt/uthp/programs/pretty_j1587"
+FILES:${PN} += "/opt/tcat/programs/pretty_j1587"

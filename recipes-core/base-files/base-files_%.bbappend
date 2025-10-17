@@ -59,12 +59,12 @@ do_install:append() {
     install -m 0644 ${WORKDIR}/.nanorc ${D}/home/uthp/.nanorc
 
     # standards
-    install -d ${D}/opt/uthp/J1939
-    install -m 0644 ${WORKDIR}/J1939db.json ${D}/opt/uthp/J1939/J1939db.json
-    install -d ${D}/opt/uthp/J1708
-    install -m 0644 ${WORKDIR}/J1708_201609.pdf.txt ${D}/opt/uthp/J1708/J1708_201609.pdf.txt
-    install -d ${D}/opt/uthp/J1587
-    install -m 0644 ${WORKDIR}/J1587_201301.pdf.txt ${D}/opt/uthp/J1587/J1587_201301.pdf.txt
+    install -d ${D}/opt/tcat/J1939
+    install -m 0644 ${WORKDIR}/J1939db.json ${D}/opt/tcat/J1939/J1939db.json
+    install -d ${D}/opt/tcat/J1708
+    install -m 0644 ${WORKDIR}/J1708_201609.pdf.txt ${D}/opt/tcat/J1708/J1708_201609.pdf.txt
+    install -d ${D}/opt/tcat/J1587
+    install -m 0644 ${WORKDIR}/J1587_201301.pdf.txt ${D}/opt/tcat/J1587/J1587_201301.pdf.txt
 
     # given that bash is the default shell, we need to install these files for root as well
     install -m 0644 ${WORKDIR}/.bashrc-root ${D}/root/.bashrc

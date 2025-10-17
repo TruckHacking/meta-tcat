@@ -14,18 +14,18 @@ S = "${WORKDIR}/git"
 
 do_install:append() {
     install -d ${D}/usr/bin
-    install -d ${D}/opt/uthp/programs/pretty_j1939
-    cp -r ${S}/* ${D}/opt/uthp/programs/pretty_j1939
-    install -m 0755 ${WORKDIR}/.env ${D}/opt/uthp/programs/pretty_j1939
+    install -d ${D}/opt/tcat/programs/pretty_j1939
+    cp -r ${S}/* ${D}/opt/tcat/programs/pretty_j1939
+    install -m 0755 ${WORKDIR}/.env ${D}/opt/tcat/programs/pretty_j1939
 
     # links to a environment file that runs the program
-    ln -s /opt/uthp/programs/pretty_j1939/.env ${D}/usr/bin/pretty_j1939
+    ln -s /opt/tcat/programs/pretty_j1939/.env ${D}/usr/bin/pretty_j1939
 
     # make it executable after copying
-    chmod +x ${D}/opt/uthp/programs/pretty_j1939/pretty_j1939.py
+    chmod +x ${D}/opt/tcat/programs/pretty_j1939/pretty_j1939.py
 }
 
 RDEPENDS:${PN} += "python3-bitarray bash"
 
-FILES:${PN} += "/opt/uthp/programs/pretty_j1939 \
+FILES:${PN} += "/opt/tcat/programs/pretty_j1939 \
                 /usr/bin/pretty_j1939"

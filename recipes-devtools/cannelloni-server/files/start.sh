@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Configuration file (sourced)
-CONFIG_FILE="/opt/uthp/scripts/cannelloni-server/cannelloni-server.conf"
+CONFIG_FILE="/opt/tcat/scripts/cannelloni-server/cannelloni-server.conf"
 
 if [[ -f "$CONFIG_FILE" ]]; then
     source $CONFIG_FILE

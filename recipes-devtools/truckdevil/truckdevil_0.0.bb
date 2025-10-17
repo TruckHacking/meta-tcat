@@ -12,13 +12,13 @@ SRC_URI += "file://truckdevil"
 
 # install full TruckDevil package in /home/uthp
 do_install() {
-    install -d ${D}/opt/uthp/programs
+    install -d ${D}/opt/tcat/programs
     install -d ${D}/usr/bin
 
-    cp -r ${S}/truckdevil ${D}/opt/uthp/programs
+    cp -r ${S}/truckdevil ${D}/opt/tcat/programs
 
     # Make the script executable after we copied everything over
-    chmod +x ${D}/opt/uthp/programs/truckdevil/truckdevil.py
+    chmod +x ${D}/opt/tcat/programs/truckdevil/truckdevil.py
 
     # Add the truckdevil wrapper
     install -m 0755 ${WORKDIR}/truckdevil ${D}/usr/bin/truckdevil
@@ -31,6 +31,6 @@ do_compile() {
 }
 
 RDEPENDS:${PN} += "python3-core python3 bash"
-FILES:${PN} += "/opt/uthp/programs/truckdevil \
+FILES:${PN} += "/opt/tcat/programs/truckdevil \
                 /usr/bin/truckdevil \
                 "
