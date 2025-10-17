@@ -1,3 +1,5 @@
+### Modifications for the TCAT / TruckHackingOS ###
+
 EXTRA_IMAGE_FEATURES ?= "debug-tweaks"
 PATCHRESOLVE = "noop"
 BB_DISKMON_DIRS ??= "\
@@ -12,7 +14,6 @@ BB_DISKMON_DIRS ??= "\
 
 CONF_VERSION = "2"
 
-### UTHPMODS ###
 INIT_MANAGER = "systemd"
 
 I_SWEAR_TO_MIGRATE_TO_PYTHON3="yes"
@@ -38,8 +39,9 @@ EXTRA_IMAGE_FEATURES += " package-management bash-completion-pkgs"
 # Config pin may require to many changes to the kernel and is not strictly necessary at the moment
 # BBMASK += "meta-custom/recipes-devtools/config-pin"
 DISTRO ?= "TruckHackingOS"
+
 # needs to be named beagle.* to override the default beaglebone.conf
-MACHINE ?= "uthp"
+MACHINE ?= "tcat"
 
 # include buildinfo in the image for traceability
 INHERIT += "image-buildinfo"
