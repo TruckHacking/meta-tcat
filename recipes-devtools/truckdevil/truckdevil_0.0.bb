@@ -10,7 +10,6 @@ SRC_URI = "git://github.com/Spenc3rB/TruckDevil.git;protocol=https;rev=95f4aadbe
 S = "${WORKDIR}/git"
 SRC_URI += "file://truckdevil"
 
-# install full TruckDevil package in /home/uthp
 do_install() {
     install -d ${D}/opt/tcat/programs
     install -d ${D}/usr/bin

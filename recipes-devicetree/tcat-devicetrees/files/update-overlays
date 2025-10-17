@@ -1,6 +1,6 @@
 #!/bin/bash
 # Define source and destination directories
-DTB_SOURCE_DIR="/boot/dtb/uthp/"
+DTB_SOURCE_DIR="/boot/dtb/tcat/"
 EXTLINUX_DIR="/boot/p1/extlinux/"
 EXTLINUX_CONF="/boot/p1/extlinux/extlinux.conf"
 
@@ -10,9 +10,9 @@ if [ "$UID" -ne 0 ]; then
     exit 1
 fi
 # clean first
-make -C /boot/dts/uthp/ clean
+make -C /boot/dts/tcat/ clean
 # then compile
-make -C /boot/dts/uthp/
+make -C /boot/dts/tcat/
 
 # Check if source and destination directories exist
 if [ ! -d "$DTB_SOURCE_DIR" ]; then

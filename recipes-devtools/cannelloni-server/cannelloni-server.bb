@@ -1,5 +1,5 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
-DESCRIPTION = "Cannelloni Server Service for UTHP"
+DESCRIPTION = "Cannelloni Server Service for Truck Hacking OS"
 SUMMARY = "Must be configured with /opt/tcat/scripts/cannelloni-server/cannelloni-server.conf"
 LICENSE = "MIT"
 

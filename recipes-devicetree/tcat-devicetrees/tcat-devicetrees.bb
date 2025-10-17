@@ -13,13 +13,13 @@ SRC_URI += "file://BB-MCP251xFD-SPI.dts \
 LICENSE = "MIT"
 ### REMEMBER TO dtc -O dtb -o <something>.dtbo -b 0 -@ <something>.dts ###
 do_install() {
-    install -d ${D}/boot/dtb/uthp
-    install -d ${D}/boot/dts/uthp
-    install -m 0644 ${WORKDIR}/*.dts ${D}/boot/dts/uthp
+    install -d ${D}/boot/dtb/tcat
+    install -d ${D}/boot/dts/tcat
+    install -m 0644 ${WORKDIR}/*.dts ${D}/boot/dts/tcat
     # install makefile
-    install -m 0644 ${WORKDIR}/Makefile ${D}/boot/dts/uthp
+    install -m 0644 ${WORKDIR}/Makefile ${D}/boot/dts/tcat
     # install README
-    install -m 0644 ${WORKDIR}/README.md ${D}/boot/dts/uthp
+    install -m 0644 ${WORKDIR}/README.md ${D}/boot/dts/tcat
 
     install -d ${D}/usr/bin
     install -m 0755 ${WORKDIR}/update-overlays ${D}/usr/bin

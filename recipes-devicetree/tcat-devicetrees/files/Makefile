@@ -4,7 +4,7 @@ DTC = dtc
 # dt-bindings directory
 DT_BINDINGS_DIR = /usr/lib/modules/$(shell uname -r)/build/include/dt-bindings
 SRC_DIR = .
-OUT_DIR = /boot/dtb/uthp
+OUT_DIR = /boot/dtb/tcat
 
 # Find all .dts files in the current directory
 DTS_FILES := $(wildcard $(SRC_DIR)/*.dts)
