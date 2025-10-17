@@ -68,11 +68,11 @@ function clone_and_checkout() {
     git checkout 11.00.14 || handle_error $LINENO
     cd "$FULL_YOCTO_DIR" || handle_error $LINENO
 
-    # Clone and checkout meta-uthp
-    if [ ! -d "$FULL_YOCTO_DIR/meta-uthp" ]; then
-        git clone https://github.com/SystemsCyber/meta-uthp "$FULL_YOCTO_DIR/meta-uthp" || handle_error $LINENO
+    # Clone and checkout meta-tcat
+    if [ ! -d "$FULL_YOCTO_DIR/meta-tcat" ]; then
+        git clone https://github.com/nmfta-repo/meta-tcat "$FULL_YOCTO_DIR/meta-tcat" || handle_error $LINENO
     fi
-    cd "$FULL_YOCTO_DIR/meta-uthp" || handle_error $LINENO
+    cd "$FULL_YOCTO_DIR/meta-tcat" || handle_error $LINENO
     # TODO change to a tag
     git checkout scarthgap || handle_error $LINENO
     cd "$FULL_YOCTO_DIR" || handle_error $LINENO
@@ -94,14 +94,14 @@ FULL_YOCTO_DIR=$(cd "$YOCTO_DIR" && pwd) || handle_error $LINENO
 echo -e "\n==> Yocto development directory located at: $FULL_YOCTO_DIR\n"
 clone_and_checkout
 
-# Add the meta-uthp conf.samples to their respective directories
-echo -e "\n==> Copying layer configuration files from the meta-uthp repo to $FULL_YOCTO_DIR/build/conf\n"
+# Add the meta-tcat conf.samples to their respective directories
+echo -e "\n==> Copying layer configuration files from the meta-tcat repo to $FULL_YOCTO_DIR/build/conf\n"
 mkdir -p "$FULL_YOCTO_DIR/build/conf" || handle_error $LINENO
-cp "$FULL_YOCTO_DIR/meta-uthp/conf.samples/meta-python2-layer.conf.sample" "$FULL_YOCTO_DIR/meta-python2/conf/layer.conf" || handle_error $LINENO
-cp "$FULL_YOCTO_DIR/meta-uthp/conf.samples/meta-jupyter-layer.conf.sample" "$FULL_YOCTO_DIR/meta-jupyter/conf/layer.conf" || handle_error $LINENO
-cp "$FULL_YOCTO_DIR/meta-uthp/conf.samples/local.conf.sample" "$FULL_YOCTO_DIR/build/conf/local.conf" || handle_error $LINENO
-cp "$FULL_YOCTO_DIR/meta-uthp/conf.samples/bblayers.conf.sample" "$FULL_YOCTO_DIR/build/conf/bblayers.conf" || handle_error $LINENO
-cp "$FULL_YOCTO_DIR/meta-uthp/conf.samples/conf-notes.txt" "$FULL_YOCTO_DIR/build/conf/conf-notes.txt" || handle_error $LINENO
-cp "$FULL_YOCTO_DIR/meta-uthp/conf.samples/conf-summary.txt.sample" "$FULL_YOCTO_DIR/build/conf/conf-summary.txt" || handle_error $LINENO
+cp "$FULL_YOCTO_DIR/meta-tcat/conf.samples/meta-python2-layer.conf.sample" "$FULL_YOCTO_DIR/meta-python2/conf/layer.conf" || handle_error $LINENO
+cp "$FULL_YOCTO_DIR/meta-tcat/conf.samples/meta-jupyter-layer.conf.sample" "$FULL_YOCTO_DIR/meta-jupyter/conf/layer.conf" || handle_error $LINENO
+cp "$FULL_YOCTO_DIR/meta-tcat/conf.samples/local.conf.sample" "$FULL_YOCTO_DIR/build/conf/local.conf" || handle_error $LINENO
+cp "$FULL_YOCTO_DIR/meta-tcat/conf.samples/bblayers.conf.sample" "$FULL_YOCTO_DIR/build/conf/bblayers.conf" || handle_error $LINENO
+cp "$FULL_YOCTO_DIR/meta-tcat/conf.samples/conf-notes.txt" "$FULL_YOCTO_DIR/build/conf/conf-notes.txt" || handle_error $LINENO
+cp "$FULL_YOCTO_DIR/meta-tcat/conf.samples/conf-summary.txt.sample" "$FULL_YOCTO_DIR/build/conf/conf-summary.txt" || handle_error $LINENO
 for file in $FULL_YOCTO_DIR/build/conf/*; do sed -i "s#\${FULL_YOCTO_DIR}#$(pwd)#g" "$file"; done
 echo -e "\n==> Configuration files copied. Please run 'source oe-init-build-env' from WITHIN the 'Yocto' dir to run bitbake commands.\n"
