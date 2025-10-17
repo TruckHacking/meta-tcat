@@ -1,5 +1,5 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
-SRC_URI += "file://init-uthp.sh \
+SRC_URI += "file://init-tcat.sh \
             file://fstab \
             file://.bashrc \
             file://.bashrc-root \
@@ -30,12 +30,12 @@ do_install:append() {
 
     # Profile setups (has to be .sh extension for profile to pick it up)
     install -d ${D}${sysconfdir}/profile.d
-    install -m 0755 ${WORKDIR}/init-uthp.sh ${D}${sysconfdir}/profile.d/init-uthp.sh
+    install -m 0755 ${WORKDIR}/init-tcat.sh ${D}${sysconfdir}/profile.d/init-tcat.sh
 
     # fstab
     install -m 0644 ${WORKDIR}/fstab ${D}${sysconfdir}/fstab
 
-    ### This section creates a symlink to support smooth installtion of rpds-py (hacky way) and the uthp user perms
+    ### This section creates a symlink to support smooth installtion of rpds-py (hacky way) and the nmfta user perms
     # Install the rpds-py.sh script
     install -d ${D}${sysconfdir}/init.d
     install -d ${D}${sysconfdir}/rc3.d
@@ -52,11 +52,11 @@ do_install:append() {
     install -m 0755 ${WORKDIR}/update-time ${D}/usr/bin/update-time
 
     # user setups
-    install -d ${D}/home/uthp
+    install -d ${D}/home/nmfta
     install -d ${D}/root
-    install -m 0644 ${WORKDIR}/.bashrc ${D}/home/uthp/.bashrc
-    install -m 0644 ${WORKDIR}/.bash_profile ${D}/home/uthp/.bash_profile
-    install -m 0644 ${WORKDIR}/.nanorc ${D}/home/uthp/.nanorc
+    install -m 0644 ${WORKDIR}/.bashrc ${D}/home/nmfta/.bashrc
+    install -m 0644 ${WORKDIR}/.bash_profile ${D}/home/nmfta/.bash_profile
+    install -m 0644 ${WORKDIR}/.nanorc ${D}/home/nmfta/.nanorc
 
     # standards
     install -d ${D}/opt/tcat/J1939
@@ -76,7 +76,7 @@ do_install:append() {
     install -m 0755 ${WORKDIR}/emmc-flasher ${D}/usr/bin/emmc-flasher
 
     install -d ${D}${sysconfdir}/systemd/timesyncd.conf.d
-    install -m 0644 ${WORKDIR}/timesyncd.conf ${D}${sysconfdir}/systemd/timesyncd.conf.d/timesyncd-uthp.conf
+    install -m 0644 ${WORKDIR}/timesyncd.conf ${D}${sysconfdir}/systemd/timesyncd.conf.d/timesyncd-tcat.conf
 
     # install the led and rename-can-itf scripts
     install -d ${D}/usr/bin
@@ -92,7 +92,7 @@ do_install:append() {
 
     # limits for logs files
     install -d ${D}${sysconfdir}/systemd/journald.conf.d
-    install -m 0644 ${WORKDIR}/journald.conf ${D}${sysconfdir}/systemd/journald.conf.d/journald-uthp.conf
+    install -m 0644 ${WORKDIR}/journald.conf ${D}${sysconfdir}/systemd/journald.conf.d/journald-tcat.conf
 }
 
 RDEPENDS:${PN} += "bash python3 python3-core python3-pyserial"
