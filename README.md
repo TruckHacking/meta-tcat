@@ -2,53 +2,7 @@
 
 This README file contains information on the contents of the meta-tcat layer, corresponding to the [NMFTA Truck Cybersecurity Assessment Tool (TCAT)](https://github.com/nmfta-repo/TCAT).
 
-Please see the corresponding sections below for details.
-
-## Dependencies
-
-The meta-tcat layer depends on the following layers. It should build and function when using the noted branches; however, 'official' releases of the TCAT images are based on specific commits to those branches, please consult those releases for details on a working collection of commits on those branches.
-
-- **URI**: core  
-
-  **branch**: scarthgap
-
-- **URI**: meta-openembedded/meta-python 
-  
-  **branch**: scarthgap
-
-- **URI**: meta-python2
-
-  **branch**: master / close to scarthgap
-
-- **URI**: networking-layer (meta-openembedded/meta-networking)
-
-  **branch**: scarthgap
-
-- **URI**: jupyter-layer
-
-  **branch**: master / close to scarthgap
-
-- **URI**: arm-toolchain  
-
-  **branch**: scarthgap
-
-- **URI**: meta-arm  
-
-  **branch**: scarthgap
-
-- **URI**: meta-ti-bsp  
-
-  **branch**: scarthgap
-
-- **URI**: meta-ti-extras  
-
-  **branch**: scarthgap
-
-- **URI**: meta-ti-beagle  
-
-  **branch**: scarthgap
-
-## From scratch:
+## Build From Scratch:
 
 ```shell
 mkdir tcat-dev
