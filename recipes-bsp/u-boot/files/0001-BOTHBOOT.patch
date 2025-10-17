@@ -1,7 +1,7 @@
 From c744d7a5740039ebbb620870bdadfda25cc7a7d3 Mon Sep 17 00:00:00 2001
 From: spenc3rb <beersc@colostate.edu>
 Date: Mon, 5 Aug 2024 15:46:51 -0600
-Subject: [PATCH] UTHPBOOT
+Subject: [PATCH] Try to boot from both sd card and eMMC
 
 ---
  include/configs/am335x_evm.h | 2 +-
