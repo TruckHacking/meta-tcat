@@ -160,7 +160,7 @@ cleanup () {
 }
 
 rename_host() {
-    read -p "Enter the complete serial number for this board (e.g., UTHP-R1-XXXX) to be used for hostname:" SERIAL_NUMBER
+    read -p "Enter the complete identifier for this board (e.g., UTHP-R1-XXXX, MyTruckDuck77, etc.) to be used for hostname:" SERIAL_NUMBER
 
     if [[ -z "$SERIAL_NUMBER" ]]; then
         echo -e "${RED}Error: Serial number cannot be empty.${NC}" >&2
