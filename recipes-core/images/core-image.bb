@@ -1,5 +1,5 @@
-SUMMARY = "UTHP Core Image Recipe"
-DESCRIPTION = "A core image recipe for the UTHP project"
+SUMMARY = "Truck Hacking OS Core Image Recipe"
+DESCRIPTION = "A core image recipe for Truck Hacking"
 LICENSE = "MIT"
 
 INHERIT += "cve-check"
@@ -23,8 +23,8 @@ CORE_OS = " \
     safe-shutdown \
     locale-base-en-us \
     locale-base-en-gb \
-    uthp-serial-services \
-    uthp-tcp-services \
+    tcat-serial-services \
+    tcat-tcp-services \
  "
 
 KERNEL_EXTRA_INSTALL = " \
@@ -32,7 +32,7 @@ KERNEL_EXTRA_INSTALL = " \
     kernel-modules \
     linux-libc-headers-dev \
     kernel-devsrc \
-    uthp-devicetrees \
+    tcat-devicetrees \
  "
 
 DEV_SDK_INSTALL = " \

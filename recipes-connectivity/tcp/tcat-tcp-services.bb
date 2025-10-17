@@ -1,4 +1,4 @@
-DESCRIPTION = "Systemd TCP Forwarding Services for the UTHP"
+DESCRIPTION = "Systemd TCP Forwarding Services for Truck Hacking OS"
 LICENSE = "MIT"
 
 SRC_URI = "file://truckdevil-tcp.service \
@@ -14,4 +14,4 @@ do_install() {
 
 FILES:${PN} += "*"
 
-RDEPENDS:${PN} += "python3-pyserial python3-core python3"
+RDEPENDS:${PN} += " python3-pyserial python3-core python3"
