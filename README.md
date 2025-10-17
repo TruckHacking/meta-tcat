@@ -1,12 +1,12 @@
-# meta-uthp layer
+# meta-tcat layer
 
-This README file contains information on the contents of the meta-uthp layer, corresponding to the [UTHP project](https://github.com/SystemsCyber/UTHP).
+This README file contains information on the contents of the meta-tcat layer, corresponding to the [NMFTA Truck Cybersecurity Assessment Tool (TCAT)](https://github.com/nmfta-repo/TCAT).
 
 Please see the corresponding sections below for details.
 
 ## Dependencies
 
-The meta-uthp layer depends on the following layers:
+The meta-tcat layer depends on the following layers. It should build and function when using the noted branches; however, 'official' releases of the TCAT images are based on specific commits to those branches, please consult those releases for details on a working collection of commits on those branches.
 
 - **URI**: core  
 
@@ -51,18 +51,18 @@ The meta-uthp layer depends on the following layers:
 ## From scratch:
 
 ```shell
-mkdir uthp-dev
-cd uthp-dev
+mkdir tcat-dev
+cd tcat-dev
 ```
-Download the uthp-setup-dev-env.sh script:
+Download the tcat-setup-dev-env.sh script:
 ```shell
-wget https://github.com/SystemsCyber/meta-uthp/raw/scarthgap/uthp-setup-dev-env.sh
+wget https://github.com/nmfta-repo/meta-tcat/raw/scarthgap/tcat-setup-dev-env.sh
 ```
 Run it:
 > Note: Performed as user with passwordless sudo within Linux env.
 ```shell
-chmod +x uthp-setup-dev-env.sh
-./uthp-setup-dev-env.sh
+chmod +x tcat-setup-dev-env.sh
+./tcat-setup-dev-env.sh
 ```
 After it has run, you'll need to source oe-init-build-env EVERY TIME YOU OPEN A NEW TERMINAL:
 ```shell
@@ -72,8 +72,8 @@ source oe-init-build-env
 
 Then you can build the image:
 > IMPORTANT: you need to have all the standards (e.g., J1939db.json) under the same location so our recipe can pull them. Otherwise delete or modify the [base files recipe](./recipes-core/base-files/)
-> Copy the files that you have with e.g. `cp ../../../*.json meta-uthp/recipes-core/base-files/files/; cp ../../../*.pdf.txt meta-uthp/recipes-core/base-files/files/`
-> The files must be generated from the SAE PDFs as described in the pretty-j1939 and pretty_j1587 projects.
+> Copy the files that you have with e.g. `cp ../../../*.json meta-tcat/recipes-core/base-files/files/; cp ../../../*.pdf.txt meta-tcat/recipes-core/base-files/files/`
+> The files must be generated from the SAE PDFs as described in the `pretty-j1939` and `pretty_j1587` projects.
 
 
 ```shell
@@ -81,28 +81,8 @@ bitbake core-image
 ```
 > DO NOT MODIFY ANYTHING while the build is running. It will take a while to complete for the first time. Maybe go get a coffee or something:
 ```shell
-tmux new-session -d -s core-image 'bitbake <image>'
+tmux new-session -d -s core-image 'bitbake core-image'
 ```
-After the image is complete, you can flash it to your device from 'deploy-ti/images/uthp/core-image-uthp.rootfs.wic.xz' with your favorite flashing tool (tested with balenaEtcher). 
+After the image is complete, you can flash it to your device from 'deploy-ti/images/tcat/core-image-tcat.rootfs.wic.xz' with your favorite flashing tool (tested with balenaEtcher). See the User Guide in https://github.com/nmfta-repo/TCAT
 
-**If the device doesn't boot after inserting the microSD card, you will need to hold down the [s2](https://forum.beagleboard.org/t/how-does-beagleboard-determine-if-s2-is-pressed-during-boot/38587/2) button to force the bootloader to use the correct media.**
-
-After inserting the microSD card, you can connect to the device via the USB cable. The device will show up as a serial device on your computer. To connect to the device, you can use Windows 10/11, Linux, or Mac with the following command:
-```shell
-ssh root@192.168.7.2
-```
-or 
-```shell
-screen /dev/tty<port> 115200
-```
-or 
-```shell
-minicom -D /dev/tty<port> -b 115200
-```
-or
-```
-putty.exe -serial COM<#> -sercfg 115200,8,1,n,n
-```
-> Note there are 4 serial device interfaces served by the device. You can only use one of them for logging in. The other 3 are for diagnostics.
-
-Please submit any issues here: https://github.com/SystemsCyber/meta-uthp/issues
+Please submit any issues here: https://github.com/nmfta-repo/TCAT/issues
