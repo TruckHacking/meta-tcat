@@ -25,7 +25,6 @@ CORE_OS = " \
     locale-base-en-gb \
     uthp-serial-services \
     uthp-tcp-services \
-    uthp-tests \
  "
 
 KERNEL_EXTRA_INSTALL = " \
