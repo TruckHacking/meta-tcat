@@ -26,7 +26,7 @@ source oe-init-build-env
 
 Then you can build the image:
 > IMPORTANT: you need to have all the standards (e.g., J1939db.json) under the same location so our recipe can pull them. Otherwise delete or modify the [base files recipe](./recipes-core/base-files/)
-> Copy the files that you have with e.g. `cp ../../../{*.json, *.pdf.txt} meta-tcat/recipes-core/base-files/files/`
+> Copy the files that you have with e.g. `cp ../../../{*.json,*.pdf.txt} meta-tcat/recipes-core/base-files/files/`
 > The files must be generated from the SAE PDFs as described in the `pretty-j1939` and `pretty_j1587` projects.
 
 
