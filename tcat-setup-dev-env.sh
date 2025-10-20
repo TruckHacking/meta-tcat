@@ -70,7 +70,7 @@ function clone_and_checkout() {
 
     # Clone and checkout meta-tcat
     if [ ! -d "$FULL_YOCTO_DIR/meta-tcat" ]; then
-        git clone https://github.com/nmfta-repo/meta-tcat "$FULL_YOCTO_DIR/meta-tcat" || handle_error $LINENO
+        git clone https://github.com/TruckHacking/meta-tcat "$FULL_YOCTO_DIR/meta-tcat" || handle_error $LINENO
     fi
     cd "$FULL_YOCTO_DIR/meta-tcat" || handle_error $LINENO
     # TODO change to a tag
