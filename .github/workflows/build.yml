@@ -12,10 +12,10 @@ permissions:
 
 jobs:
   build:
-    # Using GitHub-hosted runner for now.
-    # To switch to a self-hosted runner on your VPS, replace with:
-    #   runs-on: [self-hosted, linux, x64]
-    runs-on: ubuntu-latest
+    # Requires a self-hosted runner with enough disk space and CPU for
+    # Yocto/bitbake builds.  Default GitHub-hosted runners do not have
+    # sufficient resources.
+    runs-on: [self-hosted, linux, x64]
 
     env:
       DEBIAN_FRONTEND: noninteractive
@@ -23,12 +23,6 @@ jobs:
     steps:
       - name: Checkout meta-tcat
         uses: actions/checkout@v4
-
-      - name: Free up disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
-          sudo apt-get clean
-          df -h
 
       - name: Create build workspace
         run: |
