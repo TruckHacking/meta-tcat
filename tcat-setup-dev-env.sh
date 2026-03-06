@@ -85,7 +85,7 @@ sudo apt install -y gawk wget git diffstat unzip texinfo gcc build-essential chr
 sudo apt install -y libegl1-mesa || echo "Warning: Optional package 'libegl1-mesa' may need to be installed manually." # ubuntu 24 issue
 sudo dpkg --add-architecture i386 # for ti-cgt-pru
 sudo apt update
-sudo apt install libc6:i386
+sudo apt install -y libc6:i386
 echo -e "\n==> Package installation completed.\n"
 
 # 2. Clone the Yocto layers
