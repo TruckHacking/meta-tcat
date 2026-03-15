@@ -1,0 +1,8 @@
+[Match]
+Name=eth0
+
+[Network]
+DHCP=yes
+Address=fe80::7ca7/64
+Address=192.168.6.2/24
+IPv6AcceptRA=yes

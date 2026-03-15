@@ -19,7 +19,7 @@ CORE_OS = " \
     openssh openssh-keygen openssh-sftp-server \
     sudo \
     libgpiod libgpiod-tools libgpiod-dev \
-    usbutils usb-gadget usb0-dhcp \
+    usbutils usb-gadget usb0-dhcp eth0-conf \
     safe-shutdown \
     locale-base-en-us \
     locale-base-en-gb \
