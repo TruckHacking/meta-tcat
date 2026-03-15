@@ -20,6 +20,7 @@ CORE_OS = " \
     sudo \
     libgpiod libgpiod-tools libgpiod-dev \
     usbutils usb-gadget usb0-dhcp eth0-conf \
+    systemd-resolved-enable \
     safe-shutdown \
     locale-base-en-us \
     locale-base-en-gb \
