@@ -19,6 +19,7 @@ SRC_URI += "file://init-tcat.sh \
             file://rename-can-interfaces \
             file://rename-can-itf.service \
             file://jupyter_notebook_config.py \
+            file://00-disable-autosave.py \
             "
 
 # These need to be added to the files directory manually. Use popper-utils pdftotext to convert the pdfs to text files.
@@ -60,6 +61,8 @@ do_install:append() {
     install -m 0644 ${WORKDIR}/.nanorc ${D}/home/nmfta/.nanorc
     install -d ${D}/home/nmfta/.jupyter
     install -m 0644 ${WORKDIR}/jupyter_notebook_config.py ${D}/home/nmfta/.jupyter/jupyter_notebook_config.py
+    install -d ${D}/home/nmfta/.ipython/profile_default/startup
+    install -m 0644 ${WORKDIR}/00-disable-autosave.py ${D}/home/nmfta/.ipython/profile_default/startup/00-disable-autosave.py
 
     # standards
     install -d ${D}/opt/tcat/J1939
