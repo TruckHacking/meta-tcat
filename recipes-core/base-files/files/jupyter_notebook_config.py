@@ -10,6 +10,9 @@ c.NotebookApp.open_browser = False
 # Set a static port (default is 8888)
 c.NotebookApp.port = 8888
 
+# Set max buffer size to 10MB
+c.NotebookApp.max_buffer_size = 10485760
+
 # Optional: Set a password so you don't have to copy tokens every time
 # from notebook.auth import passwd
 # You can generate a hash by running `passwd()` in a python shell
