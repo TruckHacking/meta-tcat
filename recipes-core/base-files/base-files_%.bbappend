@@ -18,6 +18,7 @@ SRC_URI += "file://init-tcat.sh \
             file://can-netdev-led.service \
             file://rename-can-interfaces \
             file://rename-can-itf.service \
+            file://jupyter_notebook_config.py \
             "
 
 # These need to be added to the files directory manually. Use popper-utils pdftotext to convert the pdfs to text files.
@@ -57,6 +58,8 @@ do_install:append() {
     install -m 0644 ${WORKDIR}/.bashrc ${D}/home/nmfta/.bashrc
     install -m 0644 ${WORKDIR}/.bash_profile ${D}/home/nmfta/.bash_profile
     install -m 0644 ${WORKDIR}/.nanorc ${D}/home/nmfta/.nanorc
+    install -d ${D}/home/nmfta/.jupyter
+    install -m 0644 ${WORKDIR}/jupyter_notebook_config.py ${D}/home/nmfta/.jupyter/jupyter_notebook_config.py
 
     # standards
     install -d ${D}/opt/tcat/J1939
