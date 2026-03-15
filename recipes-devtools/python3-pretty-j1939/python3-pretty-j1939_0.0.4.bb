@@ -4,7 +4,7 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${WORKDIR}/git/LICENSE;md5=86d3f3a95c324c9479bd8986968f4327"
 
 # Specify the source file location
-SRC_URI = "git://github.com/nmfta-repo/pretty_j1939.git;protocol=https;rev=4e5c497bfd12ba89fb95b4711309603e5a1e586d;branch=master"
+SRC_URI = "git://github.com/nmfta-repo/pretty_j1939.git;protocol=https;rev=6783bda9c161ff70e3c6970c7bfe0a4964234e47;branch=master"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
@@ -21,11 +21,11 @@ do_install:append() {
     # links to a environment file that runs the program
     ln -s /opt/tcat/programs/pretty_j1939/.env ${D}/usr/bin/pretty_j1939
 
-    # make it executable after copying
-    chmod +x ${D}/opt/tcat/programs/pretty_j1939/pretty_j1939.py
+    # no longer a single file pretty_j1939.py at root, it's a module
+    # we don't need to chmod+x the module files here as we run via .env wrapper
 }
 
-RDEPENDS:${PN} += "python3-bitarray bash"
+RDEPENDS:${PN} += "python3-bitstring python3-can python3-rich python3-asteval python3-defusedxml python3-unidecode python3-xlrd python3-openpyxl bash"
 
 FILES:${PN} += "/opt/tcat/programs/pretty_j1939 \
                 /usr/bin/pretty_j1939"

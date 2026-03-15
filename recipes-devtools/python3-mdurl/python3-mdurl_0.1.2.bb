@@ -1,0 +1,8 @@
+SUMMARY = "Markdown utilities for Python"
+HOMEPAGE = "https://github.com/executablebooks/mdurl"
+LICENSE = "MIT"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=33333333333333333333333333333333"
+
+SRC_URI[sha256sum] = "4332910403333333333333333333333333333333333333333333333333333333"
+
+inherit pypi setuptools3
