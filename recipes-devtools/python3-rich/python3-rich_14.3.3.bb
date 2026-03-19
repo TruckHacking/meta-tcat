@@ -1,0 +1,10 @@
+SUMMARY = "A Python library for rich text and beautiful formatting in the terminal"
+DESCRIPTION = "Rich is a Python library for rich text and beautiful formatting in the terminal."
+HOMEPAGE = "https://github.com/willmcgugan/rich"
+LICENSE = "MIT"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=b5f0b94fbc94f5ad9ae4efcf8a778303"
+SRC_URI = "https://pypi.io/packages/source/r/rich/rich-${PV}.tar.gz"
+SRC_URI[sha256sum] = "b8daa0b9e4eef54dd8cf7c86c03713f53241884e814f4e2f5fb342fe520f639b"
+S = "${WORKDIR}/rich-${PV}"
+inherit pypi python_poetry_core
+RDEPENDS:${PN} = "python3-markdown-it-py python3-pygments"

@@ -1,0 +1,1 @@
+PROVIDES += "python3-pygments"

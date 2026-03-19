@@ -1,0 +1,10 @@
+SUMMARY = "A Python library to read/write Excel 2010 xlsx/xlsm/xltx/xltm files"
+DESCRIPTION = "openpyxl is a Python library for reading and writing Excel 2010 xlsx/xlsm/xltx/xltm files."
+HOMEPAGE = "https://openpyxl.readthedocs.io"
+LICENSE = "MIT"
+LIC_FILES_CHKSUM = "file://LICENCE.rst;md5=71b3e4c71000cfd8494d1e8935cfab9c"
+SRC_URI = "https://pypi.io/packages/source/o/openpyxl/openpyxl-${PV}.tar.gz"
+SRC_URI[sha256sum] = "cf0e3cf56142039133628b5acffe8ef0c12bc902d2aadd3e0fe5878dc08d1050"
+S = "${WORKDIR}/openpyxl-${PV}"
+inherit pypi setuptools3
+RDEPENDS:${PN} = "python3-defusedxml"

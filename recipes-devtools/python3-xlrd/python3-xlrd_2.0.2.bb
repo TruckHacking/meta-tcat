@@ -1,0 +1,10 @@
+SUMMARY = "Library for extracting data from Microsoft Excel (.xls) spreadsheet files"
+DESCRIPTION = "xlrd is a library for reading data and formatting information from Excel files in the historical .xls format."
+HOMEPAGE = "http://www.python-excel.org/"
+LICENSE = "BSD-3-Clause"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=00ea1e843a43c20d9b63a8112239b0d1"
+SRC_URI = "https://pypi.io/packages/source/x/xlrd/xlrd-${PV}.tar.gz"
+SRC_URI[sha256sum] = "08b5e25de58f21ce71dc7db3b3b8106c1fa776f3024c54e45b45b374e89234c9"
+S = "${WORKDIR}/xlrd-${PV}"
+inherit pypi setuptools3
+RDEPENDS:${PN} = ""

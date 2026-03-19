@@ -1,0 +1,10 @@
+SUMMARY = "Python port of markdown-it"
+DESCRIPTION = "markdown-it-py is a Python port of the markdown-it JavaScript library, and is a high-performance, configurable, and pluggable Markdown parser that follows the CommonMark spec."
+HOMEPAGE = "https://github.com/executablebooks/markdown-it-py"
+LICENSE = "MIT"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=a38a1697260a7ad7bf29f44b362db1fc"
+PYPI_PACKAGE = "markdown_it_py"
+SRC_URI[sha256sum] = "cb0a2b4aa34f932c007117b194e945bd74e0ec24133ceb5bac59009cda1cb9f3"
+S = "${WORKDIR}/markdown_it_py-${PV}"
+inherit pypi python_flit_core
+RDEPENDS:${PN} = "python3-mdurl"
