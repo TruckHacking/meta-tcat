@@ -41,7 +41,7 @@ FILES:${PN} += "${TARGET_DIR} \
 FILES:${PN} += "${systemd_system_unitdir}/plc4trucksduck.service"
 
 # only one can be enabled at a time with PRU resources available
-RDEPENDS:${PN} += "python3-core python3 python bash"
+RDEPENDS:${PN} += "python3-core python3 bash"
 # _hard requirement_ on 6.6.32 due to pre-compiled pru binary
 RDEPENDS:${PN} += "kernel-base (= 6.6.32)"
 # this package has firmware blobs so we skip the QA consistency check
