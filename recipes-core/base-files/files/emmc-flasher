@@ -160,7 +160,7 @@ cleanup () {
 }
 
 rename_host() {
-    read -p "Enter the complete identifier for this board (e.g., UTHP-R1-XXXX, MyTruckDuck77, etc.) to be used for hostname:" SERIAL_NUMBER
+    read -e -p "Enter the complete identifier for this board (e.g., UTHP-R1-XXXX, MyTruckDuck77, etc.) to be used for hostname:" SERIAL_NUMBER
 
     if [[ -z "$SERIAL_NUMBER" ]]; then
         echo -e "${RED}Error: Serial number cannot be empty.${NC}" >&2
@@ -169,24 +169,24 @@ rename_host() {
 
     NEW_HOSTNAME="$SERIAL_NUMBER"
 
-    # Update /etc/hostname
+    # Update /etc/hostname on eMMC
     echo -e "${BLUE}Updating /etc/hostname to $NEW_HOSTNAME...${NC}"
-    echo "$NEW_HOSTNAME" | sudo tee /etc/hostname > /dev/null
+    echo "$NEW_HOSTNAME" | sudo tee /mnt/${destination}p2/etc/hostname > /dev/null
     echo -e "${BLUE}Updated /etc/hostname.${NC}"
 
-    # Update /etc/hosts
+    # Update /etc/hosts on eMMC
     echo -e "${BLUE}Updating /etc/hosts...${NC}"
 
     # Ensure 127.0.1.1 entry is correctly set
-    if grep -q "127.0.1.1" /etc/hosts; then
-        sudo sed -i "s/^127.0.1.1 .*/127.0.1.1 $NEW_HOSTNAME/" /etc/hosts
+    if grep -q "127.0.1.1" /mnt/${destination}p2/etc/hosts; then
+        sudo sed -i "s/^127.0.1.1 .*/127.0.1.1 $NEW_HOSTNAME/" /mnt/${destination}p2/etc/hosts
     else
-        echo "127.0.1.1 $NEW_HOSTNAME" | sudo tee -a /etc/hosts > /dev/null
+        echo "127.0.1.1 $NEW_HOSTNAME" | sudo tee -a /mnt/${destination}p2/etc/hosts > /dev/null
     fi
 
     # Ensure localhost entry exists
-    if ! grep -q "127.0.0.1" /etc/hosts; then
-        echo "127.0.0.1 localhost" | sudo tee -a /etc/hosts > /dev/null
+    if ! grep -q "127.0.0.1" /mnt/${destination}p2/etc/hosts; then
+        echo "127.0.0.1 localhost" | sudo tee -a /mnt/${destination}p2/etc/hosts > /dev/null
     fi
 
     echo -e "${BLUE}Hostname updated successfully.${NC}"
@@ -207,22 +207,6 @@ if df -h | grep -q "/dev/mmcblk1"; then
     exit 1
 fi
 # always ensure the emmc is zerod out first
-# erase emmc
-echo -e "${BLUE}==> Erasing eMMC${NC}"
-flush_cache
-dd if=/dev/zero of=/dev/${destination} bs=1M count=108
-sync
-dd if=/dev/${destination} of=/dev/null bs=1M count=108
-sync
-# update-overlays
-if grep -q "FDTOVERLAYS" /boot/p1/extlinux/extlinux.conf; then
-    echo -e "${BLUE}==> Device Tree Overlays should already be updated${NC}"
-else
-    echo -e "${BLUE}==> Updating Device Tree Overlays${NC}"
-    sudo update-overlays
-    sudo reboot
-    exit 0
-fi
 if ! ping -q -c 1 -W 1 google.com > /dev/null; then
     echo -e "${RED}This device needs to be connected to the internet to update the time.${NC}"
     echo
@@ -231,24 +215,15 @@ fi
 # update the time
 echo -e "${BLUE}==> Updating Time${NC}"
 sudo update-time
-# add user
-echo -e "${BLUE}==> Generating Post-Production Image Data${NC}"
-rename_host
-# check if the user 'nmfta' already exists
-if id "nmfta" &>/dev/null; then
-    deluser nmfta
-fi
-echo -e "${BLUE}Creating user 'nmfta'...${NC}"
-useradd -d /home/nmfta -s /bin/bash nmfta
-echo "nmfta:$NEW_HOSTNAME" | chpasswd
-usermod -aG sudo nmfta
-echo -e "${BLUE}==> User 'nmfta' added${NC}"
-# lock root account
-echo -e "${BLUE}==> Locking root account${NC}"
-passwd -l root
-# update nmfta dir
-echo -e "${BLUE}==> Updating nmfta directory${NC}"
-sudo chown -R nmfta:nmfta /home/nmfta
+
+# erase emmc
+echo -e "${BLUE}==> Erasing eMMC${NC}"
+flush_cache
+dd if=/dev/zero of=/dev/${destination} bs=1M count=108
+sync
+dd if=/dev/${destination} of=/dev/null bs=1M count=108
+sync
+
 # start leds
 cylon_leds & CYLON_PID=$!
 # flush cache
@@ -262,6 +237,35 @@ format_partitions
 # copy partitions (this takes up a lot of time and CPU resources)
 echo -e "${BLUE}==> Copying eMMC${NC}"
 copy_partitions
+
+# add user and post-production data on destination eMMC
+echo -e "${BLUE}==> Generating Post-Production Image Data${NC}"
+rename_host
+
+echo -e "${BLUE}Creating user 'nmfta'...${NC}"
+sudo chroot /mnt/${destination}p2 /bin/bash -c "
+if id 'nmfta' &>/dev/null; then
+    deluser nmfta
+fi
+useradd -m -d /home/nmfta -s /bin/bash nmfta
+echo 'nmfta:$NEW_HOSTNAME' | chpasswd
+usermod -aG sudo nmfta
+passwd -l root
+chown -R nmfta:nmfta /home/nmfta
+"
+echo -e "${BLUE}==> User 'nmfta' added and root account locked${NC}"
+
+# update-overlays on eMMC
+if grep -q "FDTOVERLAYS" /mnt/${destination}p1/extlinux/extlinux.conf; then
+    echo -e "${BLUE}==> Device Tree Overlays should already be updated on eMMC${NC}"
+else
+    echo -e "${BLUE}==> Updating Device Tree Overlays on eMMC${NC}"
+    mkdir -p /mnt/${destination}p2/boot/p1
+    mount /dev/${destination}p1 /mnt/${destination}p2/boot/p1
+    sudo chroot /mnt/${destination}p2 /bin/bash -c "update-overlays"
+    umount /mnt/${destination}p2/boot/p1
+fi
+
 # regenerate ssh keys
 echo -e "${BLUE}==> Regenerating SSH keys${NC}"
 regenerate_ssh_keys
