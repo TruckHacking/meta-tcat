@@ -160,6 +160,7 @@ PYTHON3_TOOLS = " \
     python3-click \
     python3-rpds-py \
     python3-pytest \
+    automotive-scapy-playground \
  "
 
 IMAGE_INSTALL += " \
