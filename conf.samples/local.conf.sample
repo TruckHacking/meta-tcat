@@ -16,7 +16,6 @@ CONF_VERSION = "2"
 
 INIT_MANAGER = "systemd"
 
-I_SWEAR_TO_MIGRATE_TO_PYTHON3="yes"
 
 PARALLEL_MAKE = "-j 12"
 BB_NUMBER_THREADS = "12"
@@ -45,3 +44,5 @@ MACHINE ?= "tcat"
 
 # include buildinfo in the image for traceability
 INHERIT += "image-buildinfo"
+
+I_SWEAR_TO_MIGRATE_TO_PYTHON3="yes"
