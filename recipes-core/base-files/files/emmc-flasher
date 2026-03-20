@@ -224,20 +224,13 @@ else
     exit 0
 fi
 if ! ping -q -c 1 -W 1 google.com > /dev/null; then
-    echo -e "${RED}This device needs to be connected to the internet to update the package list.${NC}"
-    echo 
+    echo -e "${RED}This device needs to be connected to the internet to update the time.${NC}"
+    echo
     exit 1
 fi
-# update the package list
-sudo apt update
 # update the time
 echo -e "${BLUE}==> Updating Time${NC}"
 sudo update-time
-# update the package list
-# install sigrok firmware from the debian apt repository
-# TODO: install this via a recipe
-echo -e "${BLUE}==> Installing sigrok firmware${NC}"
-sudo apt install sigrok-firmware-fx2lafw
 # add user
 echo -e "${BLUE}==> Generating Post-Production Image Data${NC}"
 rename_host

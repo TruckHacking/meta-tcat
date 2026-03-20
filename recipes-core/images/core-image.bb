@@ -108,6 +108,7 @@ CAN_TOOLS = " \
     libsocketcan-dev \
     iproute2 \
     sigrok-cli \
+    sigrok-firmware-fx2lafw \
     can2 \
     truckdevil \
     cannelloni \
