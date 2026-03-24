@@ -40,6 +40,49 @@ if [ -z "$TARGET_BB" ] || [ -z "$RAMFS_DIR" ] || [ -z "$STAGE2_SCRIPT" ] || [ -z
     exit 1
 fi
 
+# --- Target-Side Tool and Feature Verifications ---
+echo "[Target] Running pre-flight feature checks..."
+
+# Verify essential tools are available
+for t in cp mkdir grep awk mount umount chroot sed tr rm cat touch blockdev; do
+    if ! command -v "$t" >/dev/null 2>&1 && ! busybox --list | grep -q "^$t$"; then
+        echo "[Target] ERROR: Required tool '$t' is missing on target." >&2
+        exit 1
+    fi
+done
+
+# Verify blockdev supports necessary flags
+if ! blockdev --help 2>&1 | grep -qi "flushbufs" || ! blockdev --help 2>&1 | grep -qi "rereadpt"; then
+    echo "[Target] WARNING: 'blockdev' on target may not support --flushbufs or --rereadpt. Using best-effort sync instead." >&2
+fi
+
+# Verify awk and grep functionality for process parsing
+if ! echo -e "PID COMMAND\n1234 test" | awk 'NR>1 {print $1}' | grep -qE '^[0-9]+$'; then
+    echo "[Target] ERROR: 'awk' or 'grep -E' not functioning as expected. Cannot parse processes." >&2
+    exit 1
+fi
+
+# Verify mount supports --make-rprivate
+if ! mount --help 2>&1 | grep -qi "make-rprivate"; then
+    echo "[Target] WARNING: 'mount' may not support '--make-rprivate'. Pivot might fail if mounts are shared." >&2
+fi
+
+# Verify busybox --list and ln are available (needed for manual applet installation)
+if ! busybox --list >/dev/null 2>&1; then
+    echo "[Target] ERROR: 'busybox --list' is not supported. Cannot enumerate applets." >&2
+    exit 1
+fi
+if ! busybox --list | grep -q "^ln$"; then
+    echo "[Target] ERROR: 'busybox ln' is not supported. Cannot link applets." >&2
+    exit 1
+fi
+
+# Verify pivot_root is available (it should be, but let's confirm before committing)
+if ! command -v pivot_root >/dev/null 2>&1 && ! busybox --list | grep -q "^pivot_root$"; then
+    echo "[Target] ERROR: 'pivot_root' is missing. Cannot perform update." >&2
+    exit 1
+fi
+
 # Enable SysRq for emergency unmount/reboot later
 echo 1 > /proc/sys/kernel/sysrq 2>/dev/null || echo "[Target] Warning: Failed to enable SysRq."
 
@@ -66,7 +109,12 @@ echo "[Target] Installing busybox applets..."
     "$RAMFS_DIR/proc" "$RAMFS_DIR/sys" "$RAMFS_DIR/dev" "$RAMFS_DIR/tmp" \
     "$RAMFS_DIR$OLD_ROOT"
 
-"$RAMFS_DIR/bin/busybox" --install -s "$RAMFS_DIR/bin"
+# Manually create symlinks because busybox --install might not be enabled on target
+for applet in $("$RAMFS_DIR/bin/busybox" --list); do
+    if [ "$applet" != "busybox" ]; then
+        "$RAMFS_DIR/bin/busybox" ln -s busybox "$RAMFS_DIR/bin/$applet" 2>/dev/null || true
+    fi
+done
 
 # If we have xz, copy it too
 if [ -n "$TARGET_XZ" ]; then
@@ -158,26 +206,50 @@ if [ "$DRY_RUN" = "true" ]; then
     fi
 fi
 
+# --- Identity Backup ---
+echo "[Target] Backing up host identity to RAMFS..."
+mkdir -p "$RAMFS_DIR/identity_backup"
+cp -p /etc/machine-id "$RAMFS_DIR/identity_backup/" 2>/dev/null || true
+cp -p /etc/ssh/ssh_host_* "$RAMFS_DIR/identity_backup/" 2>/dev/null || true
+
 # --- Pivot Root ---
 echo "[Target] Preparing to pivot root..."
 
 echo "[Target] Quieting system (stopping services)..."
-# DO NOT kill dropbear/sshd as it holds the pipe for the image data
-killall -q udevd systemd-journald syslogd rsyslogd dbus-daemon || true
+# Disable swap if active
+swapoff -a 2>/dev/null || true
+
+# Forcefully terminate processes that might hold the filesystem
+# We avoid killing the shell ($$) and its parents if possible, but
+# a broad kill is safer for the pivot.
+# We explicitly spare the current process and its parent (the SSH session/stream)
+# to avoid cutting off the data pipe.
+CURRENT_PID=$$
+PPID_VAL=$PPID
+# Try to kill all processes except the current chain.
+# Target busybox ps doesn't support -e or -o, so we parse the default output.
+# We capture the PIDs first to ensure the pipeline subshells exit before we start killing.
+PIDS_TO_KILL=$(ps | awk 'NR>1 {print $1}' | grep -E '^[0-9]+$' | grep -vE "^($CURRENT_PID|$PPID_VAL|1)$")
+for pid in $PIDS_TO_KILL; do
+    kill -9 "$pid" >/dev/null 2>&1 || true
+done
 sleep 2
 
-echo "[Target] Syncing filesystem..."
+echo "[Target] Syncing filesystem and issuing SysRq sync..."
 sync
+echo s > /proc/sysrq-trigger 2>/dev/null || true
+sleep 1
 
 # Make root private to ensure pivot_root works if mounts are shared
 mount --make-rprivate / 2>/dev/null || true
 
 # Attempt to remount root RO to ensure consistency
 echo "[Target] Attempting to remount / read-only..."
-if ! mount -o remount,ro /; then
+if ! mount -o remount,ro / 2>/dev/null; then
     echo "[Target] Warning: Could not remount / read-only. Unclean unmount likely." >&2
     echo "[Target] Forcing sync again..."
     sync
+    echo s > /proc/sysrq-trigger 2>/dev/null || true
 fi
 
 # Bind mounts for stage 2

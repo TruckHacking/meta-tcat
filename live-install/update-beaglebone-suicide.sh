@@ -4,12 +4,13 @@ set -E
 
 # --- Configuration and Defaults ---
 TARGET_IP="192.168.7.2"
-IMAGE_FILE="deploy-ti/images/tcat/core-image-tcat.rootfs.wic.xz"
-SSH_USER="root"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+IMAGE_FILE="${SCRIPT_DIR}/core-image-tcat.rootfs.wic.xz"
+SSH_USER="nmfta"
 # SSH Options: StrictHostKeyChecking=no to avoid prompts, ConnectTimeout for responsiveness
 SSH_OPTS=(-o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -o "ConnectTimeout=10")
-PAYLOAD_BASE="suicide-payload-base.sh"
-STAGE2_SCRIPT="suicide-stage2.sh"
+PAYLOAD_BASE="${SCRIPT_DIR}/suicide-payload-base.sh"
+STAGE2_SCRIPT="${SCRIPT_DIR}/suicide-stage2.sh"
 DRY_RUN=false
 # Add a configurable timeout for monitoring
 REBOOT_TIMEOUT_SECONDS=600
@@ -17,11 +18,16 @@ REBOOT_TIMEOUT_SECONDS=600
 # --- State and Cleanup ---
 # Use mktemp to create a temporary file safely
 PAYLOAD_SCRIPT=$(mktemp) || { echo "Failed to create temp file"; exit 1; }
+SSH_SOCKET=$(mktemp -u /tmp/ssh-ctrl-XXXXXX)
+SSH_OPTS+=(-o "ControlMaster=auto" -o "ControlPath=$SSH_SOCKET" -o "ControlPersist=yes")
 
 cleanup_host() {
     # Only remove if it exists to avoid errors in strict mode
     if [ -f "$PAYLOAD_SCRIPT" ]; then
         rm -f "$PAYLOAD_SCRIPT"
+    fi
+    if [ -S "$SSH_SOCKET" ]; then
+        ssh -O exit -o "ControlPath=$SSH_SOCKET" "$SSH_USER@$TARGET_IP" 2>/dev/null || true
     fi
 }
 trap cleanup_host EXIT INT TERM
@@ -103,27 +109,51 @@ for tool in ssh scp xz ping date; do
     fi
 done
 
+echo "Running host tool feature checks..."
+# Verify xz supports -lv for byte-count extraction
+if ! xz -lv --help 2>&1 | grep -qi "\-v"; then
+    echo "Error: Host 'xz' does not support the '-lv' flags for byte-count extraction." >&2
+    exit 1
+fi
+
 echo "Calculating uncompressed image size..."
-# xz -l --robot provides stable, machine-readable output
-if ! IMG_INFO=$(xz -l --robot "$IMAGE_FILE"); then
+# xz -lv provides the byte count in parentheses for broader compatibility
+if ! IMG_INFO=$(xz -lv "$IMAGE_FILE"); then
     echo "Error: Failed to read image info from '$IMAGE_FILE' (is it a valid .xz file?)." >&2
     exit 1
 fi
-# Field 5 is uncompressed size in bytes
-IMG_SIZE_BYTES=$(echo "$IMG_INFO" | cut -f5)
+# Extract byte count from the 'Uncompressed size:' line, e.g. "10.0 MiB (10,485,760 B)"
+IMG_SIZE_BYTES=$(echo "$IMG_INFO" | grep "Uncompressed size:" | head -n 1 | awk -F'[()]' '{print $(NF-1)}' | tr -d ' ,B')
 if ! [[ "$IMG_SIZE_BYTES" =~ ^[0-9]+$ ]]; then
-    echo "Error: Could not determine uncompressed image size from xz metadata." >&2
+    echo "Error: Could not determine uncompressed image size from xz metadata (tried xz -lv)." >&2
     exit 1
 fi
 echo "Image size: $((IMG_SIZE_BYTES / 1024 / 1024)) MB"
 
 # --- Target-Side Pre-flight Checks ---
 echo "--- Target-Side Checks ---"
-echo "Connecting to target ($TARGET_IP) to verify environment..."
+echo "Establishing persistent SSH connection to target ($TARGET_IP)..."
 
-if ! ssh "${SSH_OPTS[@]}" "$SSH_USER@$TARGET_IP" "exit 0"; then
-    echo "Error: Cannot connect to target via SSH. Check IP, network, and firewall." >&2
+# -M puts ssh in master mode for connection sharing.
+# -f tells ssh to go to the background just before command execution.
+# -N tells ssh not to execute a remote command.
+if ! ssh -M -f -N "${SSH_OPTS[@]}" "$SSH_USER@$TARGET_IP"; then
+    echo "Error: Cannot establish persistent SSH connection. Check IP, network, and firewall." >&2
     exit 1
+fi
+
+# --- Privilege Escalation ---
+SUDO_CMD=""
+if [ "$SSH_USER" != "root" ]; then
+    echo "SSH user '$SSH_USER' is not root. Requesting sudo access on target to temporarily disable sudo password..."
+    # We temporarily allow passwordless sudo for the user. 
+    # This is safe because the OS is about to be completely overwritten in a few seconds.
+    # We write to a sudoers.d drop-in, or append to /etc/sudoers if the dir doesn't exist.
+    if ! ssh -t "${SSH_OPTS[@]}" "$SSH_USER@$TARGET_IP" "sudo sh -c 'mkdir -p /etc/sudoers.d && echo \"$SSH_USER ALL=(ALL) NOPASSWD: ALL\" > /etc/sudoers.d/suicide_update || echo \"$SSH_USER ALL=(ALL) NOPASSWD: ALL\" >> /etc/sudoers'"; then
+        echo "Error: Failed to obtain sudo privileges on target." >&2
+        exit 1
+    fi
+    SUDO_CMD="sudo "
 fi
 
 # Improved eMMC size check: search for a valid mmcblk device
@@ -260,7 +290,7 @@ fi
 # Pipe the stream through SSH to the payload script.
 # The payload script reads from stdin (via dd in stage 2).
 # shellcheck disable=SC2029
-if eval "$STREAM_CMD" | ssh "${SSH_OPTS[@]}" "$SSH_USER@$TARGET_IP" "/tmp/suicide_payload.sh"; then
+if eval "$STREAM_CMD" | ssh "${SSH_OPTS[@]}" "$SSH_USER@$TARGET_IP" "${SUDO_CMD}/tmp/suicide_payload.sh"; then
     echo "Stream and remote execution finished successfully."
 else
     echo "Error: The image stream failed. This could be due to:" >&2
@@ -284,8 +314,9 @@ START_TIME=$(date +%s)
 
 echo "Polling for device at $TARGET_IP (timeout: ${REBOOT_TIMEOUT_SECONDS}s)..."
 while true; do
-    # More robust check: use SSH instead of ping
-    if ssh -o "ConnectTimeout=2" "${SSH_OPTS[@]}" "$SSH_USER@$TARGET_IP" "exit 0" >/dev/null 2>&1; then
+    # More robust check: use SSH instead of ping. 
+    # Disable ControlMaster here to prevent polling failures if the old socket is dead.
+    if ssh "${SSH_OPTS[@]}" -o "ControlPath=none" -o "ConnectTimeout=2" "$SSH_USER@$TARGET_IP" "exit 0" >/dev/null 2>&1; then
         echo ""
         echo "SUCCESS: Device is back online and SSH is responsive!"
         break
