@@ -14,6 +14,7 @@ c.NotebookApp.port = 8888
 c.NotebookApp.max_buffer_size = 10485760
 
 import subprocess
+from notebook.notebookapp import NotebookApp
 
 def get_all_ips():
     ips = []
@@ -39,12 +40,19 @@ def get_all_ips():
         ips.append('192.168.7.2')
     return ips
 
-ips = get_all_ips()
-urls = [f"http://{ip}:{c.NotebookApp.port}/" for ip in ips]
+def custom_display_url_property(self):
+    ips = get_all_ips()
+    urls = []
+    for ip in ips:
+        url = self._tcp_url(ip)
+        if getattr(self, 'token', None):
+            url = self._concat_token(url)
+        urls.append(url)
+    
+    notice = "NOTICE: These numeric IP addresses are the recommended way to connect:\n        "
+    return notice + "\n    or  ".join(urls)
 
-# We use custom_display_url to suggest the numeric IPs.
-# Note: Jupyter will automatically append the authentication token to the end of this string.
-c.NotebookApp.custom_display_url = "NOTICE: These numeric IP addresses are the recommended way to connect:\n    " + "\n    or ".join(urls)
+NotebookApp.display_url = property(custom_display_url_property)
 
 # Optional: Set a password so you don't have to copy tokens every time
 # from notebook.auth import passwd
