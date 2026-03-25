@@ -1,0 +1,30 @@
+From: Gemini CLI <gemini@example.com>
+Date: Wed, 25 Mar 2026 04:24:00 +0000
+Subject: [PATCH] Fix traitlets warn missing stacklevel in notebook/traittypes.py
+
+python 3.12 compatibility with newer traitlets versions.
+---
+ notebook/traittypes.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/notebook/traittypes.py b/notebook/traittypes.py
+--- a/notebook/traittypes.py
++++ b/notebook/traittypes.py
+@@ -234,7 +234,7 @@ class InstanceFromClasses(ClassBasedTraitType):
+                     klass = self._resolve_string(klass)
+                     self.importable_klasses.append(klass)
+                 except:
+-                    warn(f"{klass} is not importable. Is it installed?", ImportWarning)
++                    warn(f"{klass} is not importable. Is it installed?", ImportWarning, stacklevel=2)
+             else:
+                 self.importable_klasses.append(klass)
+ 
+@@ -335,7 +335,7 @@ class TypeFromClasses(ClassBasedTraitType):
+                     klass = self._resolve_string(klass)
+                     self.importable_klasses.append(klass)
+                 except:
+-                    warn(f"{klass} is not importable. Is it installed?", ImportWarning)
++                    warn(f"{klass} is not importable. Is it installed?", ImportWarning, stacklevel=2)
+             else:
+                 self.importable_klasses.append(klass)
+ 
