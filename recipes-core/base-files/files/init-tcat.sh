@@ -54,6 +54,9 @@ ${greenf}
 ${reset}
 
 EOF
+
+cat /etc/issue
+
 # Set the PS1 prompt
 if [ "$EUID" -eq 0 ]; then
     export PS1="\[$greenf\]\h\[$reset\]:\[$greenfbright\]\w\[$reset\]# "

@@ -105,6 +105,15 @@ do_install:append() {
     # limits for logs files
     install -d ${D}${sysconfdir}/systemd/journald.conf.d
     install -m 0644 ${WORKDIR}/journald.conf ${D}${sysconfdir}/systemd/journald.conf.d/journald-tcat.conf
+
+    # Generate custom /etc/issue
+    echo "${DISTRO_NAME} ${DISTRO_VERSION}" > ${D}${sysconfdir}/issue
+    if echo "${DISTRO_VERSION}" | grep -q 'rc'; then
+        META_TCAT_COMMIT=$(git -C ${COREBASE}/meta-tcat rev-parse --short HEAD 2>/dev/null || echo "unknown")
+        echo "meta-tcat commit: $META_TCAT_COMMIT" >> ${D}${sysconfdir}/issue
+    fi
+    echo "" >> ${D}${sysconfdir}/issue
+    cp ${D}${sysconfdir}/issue ${D}${sysconfdir}/issue.net
 }
 
 RDEPENDS:${PN} += "bash python3 python3-core python3-pyserial"
