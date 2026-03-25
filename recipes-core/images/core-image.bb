@@ -12,8 +12,8 @@ IMAGE_LINGUAS = "en-us"
 
 IMAGE_INSTALL = " packagegroup-core-boot ${CORE_IMAGE_EXTRA_INSTALL}"
 
-# The rootfs size is 2.8GB which is adjusted dynamically by bitbake
-IMAGE_ROOTFS_SIZE = "2797152"
+# The rootfs size is 2.6GB to leave room for the 1.3 overhead factor within the 3.6GB eMMC
+IMAGE_ROOTFS_SIZE = "2662400"
 
 CORE_OS = " \
     openssh openssh-keygen openssh-sftp-server \
