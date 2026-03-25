@@ -113,6 +113,7 @@ CAN_TOOLS = " \
     truckdevil \
     cannelloni \
     cannelloni-server \
+    can-conf \
  "
 
 PREFERRED_PROVIDER_python3-scapy = "python3-scapy-j1939"
