@@ -207,14 +207,12 @@ if df -h | grep -q "/dev/mmcblk1"; then
     exit 1
 fi
 # always ensure the emmc is zerod out first
-if ! ping -q -c 1 -W 1 google.com > /dev/null; then
-    echo -e "${RED}This device needs to be connected to the internet to update the time.${NC}"
-    echo
-    exit 1
-fi
+
 # update the time
 echo -e "${BLUE}==> Updating Time${NC}"
-sudo update-time
+if ! sudo update-time; then
+    echo -e "${RED}Warning: Failed to update time. Time is not synchronized.${NC}"
+fi
 
 # erase emmc
 echo -e "${BLUE}==> Erasing eMMC${NC}"
