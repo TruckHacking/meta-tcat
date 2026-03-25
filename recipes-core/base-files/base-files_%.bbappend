@@ -68,6 +68,8 @@ do_install:append() {
     # standards
     install -d ${D}/opt/tcat/J1939
     install -m 0644 ${WORKDIR}/J1939db.json ${D}/opt/tcat/J1939/J1939db.json
+    install -d ${D}/home/nmfta/.config/pretty_j1939
+    ln -sf /opt/tcat/J1939/J1939db.json ${D}/home/nmfta/.config/pretty_j1939/J1939db.json
     install -d ${D}/opt/tcat/J1708
     install -m 0644 ${WORKDIR}/J1708_201609.pdf.txt ${D}/opt/tcat/J1708/J1708_201609.pdf.txt
     install -d ${D}/opt/tcat/J1587
