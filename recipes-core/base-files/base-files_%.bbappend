@@ -21,6 +21,7 @@ SRC_URI += "file://init-tcat.sh \
             file://jupyter_notebook_config.py \
             file://00-disable-autosave.py \
             file://cpu-governor.conf \
+            file://tcat-ops-sudoers \
             "
 
 # These need to be added to the files directory manually. Use popper-utils pdftotext to convert the pdfs to text files.
@@ -97,6 +98,10 @@ do_install:append() {
     install -d ${D}/${base_libdir}/systemd/system/
     install -m 0644 ${WORKDIR}/can-netdev-led.service ${D}${base_libdir}/systemd/system/can-netdev-led.service
     install -m 0644 ${WORKDIR}/rename-can-itf.service ${D}${base_libdir}/systemd/system/rename-can-itf.service
+
+    # install sudoers drop-in
+    install -d ${D}${sysconfdir}/sudoers.d
+    install -m 0440 ${WORKDIR}/tcat-ops-sudoers ${D}${sysconfdir}/sudoers.d/tcat-ops
 
     install -d ${D}/usr/lib/tmpfiles.d
     install -m 0644 ${WORKDIR}/cpu-governor.conf ${D}/usr/lib/tmpfiles.d/cpu-governor.conf
