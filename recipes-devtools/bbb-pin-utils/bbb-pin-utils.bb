@@ -3,7 +3,7 @@ HOMEPAGE = "https://github.com/mvduin/bbb-pin-utils"
 LICENSE = "MIT"
 
 SRC_URI = "git://github.com/mvduin/bbb-pin-utils.git;protocol=https;branch=master"
-SRCREV = "${AUTOREV}"
+SRCREV = "f738124520897c9e4b51afd6940b9b0028097ec0"
 
 PV = "1.0+git${SRCPV}"
 S = "${WORKDIR}/git"
