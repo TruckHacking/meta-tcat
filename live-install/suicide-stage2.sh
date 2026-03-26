@@ -76,12 +76,8 @@ if eval "$WRITE_CMD"; then
         mount --bind /dev "$NEW_ROOT/dev"
 
         # 1. Fix fstab
-        # We explicitly set root to the actual partition we just flashed
-        echo "[Stage3] Fixing fstab (setting root to $PART2)..."
-        # Remove any existing mmcblk lines and replace with explicit ones
-        sed -i '/mmcblk/d' "$NEW_ROOT/etc/fstab"
-        echo "$PART1  /boot/p1  auto  defaults  0  2" >> "$NEW_ROOT/etc/fstab"
-        echo "$PART2  /         auto  defaults  0  1" >> "$NEW_ROOT/etc/fstab"
+        # We NO LONGER modify fstab. The .wic image defaults to mmcblk0p1/p2, 
+        # which is correct when the eMMC boots without an SD card.
         
         # 2. Restore SSH keys & machine-id
         echo "[Stage3] Restoring SSH keys and machine-id..."
@@ -92,8 +88,8 @@ if eval "$WRITE_CMD"; then
         rm -f "$NEW_ROOT/etc/ssh/ssh.regenerate" || true
 
         # 3. Rename Host and Create User
-        if [ -f /oldroot/etc/hostname ]; then
-            OLD_HOSTNAME=$(cat /oldroot/etc/hostname | tr -d '[:space:]')
+        if [ -f /identity_backup/hostname ]; then
+            OLD_HOSTNAME=$(cat /identity_backup/hostname | tr -d '[:space:]')
         else
             OLD_HOSTNAME="tcat"
         fi
@@ -110,17 +106,41 @@ if eval "$WRITE_CMD"; then
                 echo "127.0.0.1 localhost" >> "$NEW_ROOT/etc/hosts"
             fi
 
-            if [ -x "$NEW_ROOT/usr/sbin/useradd" ]; then
-                chroot "$NEW_ROOT" /bin/bash -c "
-                    if id 'nmfta' &>/dev/null; then
-                        deluser nmfta
+            if [ -s /identity_backup/passwd.nmfta ]; then
+                # Restore nmfta user from identity_backup
+                cat /identity_backup/passwd.nmfta >> "$NEW_ROOT/etc/passwd" || true
+                cat /identity_backup/shadow.nmfta >> "$NEW_ROOT/etc/shadow" || true
+                cat /identity_backup/group.nmfta >> "$NEW_ROOT/etc/group" || true
+                
+                # Make sure nmfta is in the sudo and tcat-ops groups in the new rootfs
+                if ! grep -q "^tcat-ops:" "$NEW_ROOT/etc/group"; then
+                    echo "tcat-ops:x:992:" >> "$NEW_ROOT/etc/group"
+                fi
+                for grp in sudo tcat-ops; do
+                    if grep -q "^${grp}:" "$NEW_ROOT/etc/group"; then
+                        sed -i "/^${grp}:/ s/\$/nmfta,/" "$NEW_ROOT/etc/group"
+                        # clean up double commas if it was already there or empty
+                        sed -i 's/:,/:/g; s/,,/,/g' "$NEW_ROOT/etc/group"
                     fi
-                    useradd -m -d /home/nmfta -s /bin/bash nmfta
-                    echo 'nmfta:$OLD_HOSTNAME' | chpasswd
-                    usermod -aG sudo nmfta
-                    passwd -l root
-                    chown -R nmfta:nmfta /home/nmfta
-                "
+                done
+                
+                # Lock root account just in case
+                sed -i 's/^root:[^:]*:/root:!:/' "$NEW_ROOT/etc/shadow"
+                
+                # Ensure home directory exists and restore ssh keys
+                mkdir -p "$NEW_ROOT/home/nmfta/.ssh"
+                if [ -d "/identity_backup/ssh_keys" ] && [ "$(ls -A /identity_backup/ssh_keys 2>/dev/null)" ]; then
+                    cp -rp /identity_backup/ssh_keys/* "$NEW_ROOT/home/nmfta/.ssh/" 2>/dev/null || true
+                fi
+                
+                # Fix ownership of home directory
+                NMFTA_UID=$(cat /identity_backup/passwd.nmfta | cut -d: -f3)
+                NMFTA_GID=$(cat /identity_backup/passwd.nmfta | cut -d: -f4)
+                if [ -n "$NMFTA_UID" ] && [ -n "$NMFTA_GID" ]; then
+                    chown -R "$NMFTA_UID:$NMFTA_GID" "$NEW_ROOT/home/nmfta" 2>/dev/null || true
+                fi
+            else
+                echo "[Stage3] Warning: nmfta user not found in identity_backup. Cannot restore."
             fi
         fi
 
@@ -128,16 +148,32 @@ if eval "$WRITE_CMD"; then
         echo "[Stage3] Updating Device Tree Overlays and Boot Config..."
         mkdir -p "$NEW_ROOT/boot/p1"
         if mount "$PART1" "$NEW_ROOT/boot/p1"; then
-            # Fix root device in extlinux.conf to match the flashed device
-            EXT_CONF="$NEW_ROOT/boot/p1/extlinux/extlinux.conf"
-            if [ -f "$EXT_CONF" ]; then
-                echo "[Stage3] Setting root device in extlinux.conf to $PART2..."
-                # Replace root=... with root=PART2
-                sed -i "s|root=[^ ]*|root=$PART2|g" "$EXT_CONF"
-            fi
-
+            # We avoid chrooting to run update-overlays due to host kernel incompatibilities.
+            # Instead, we create a one-shot systemd service to run it on the first boot.
             if [ -x "$NEW_ROOT/usr/bin/update-overlays" ] || [ -x "$NEW_ROOT/bin/update-overlays" ]; then
-                chroot "$NEW_ROOT" /bin/bash -c "update-overlays"
+                if grep -q "FDTOVERLAYS" "$NEW_ROOT/boot/p1/extlinux/extlinux.conf" 2>/dev/null; then
+                    echo "[Stage3] Device Tree Overlays appear to be already configured. Skipping update-overlays."
+                else
+                    echo "[Stage3] Scheduling update-overlays for first boot..."
+                    cat << 'EOF' > "$NEW_ROOT/etc/systemd/system/first-boot-update-overlays.service"
+[Unit]
+Description=Run update-overlays on first boot
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/update-overlays
+ExecStartPost=/bin/rm -f /etc/systemd/system/first-boot-update-overlays.service
+ExecStartPost=/bin/rm -f /etc/systemd/system/multi-user.target.wants/first-boot-update-overlays.service
+ExecStartPost=/bin/systemctl reboot
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+                    mkdir -p "$NEW_ROOT/etc/systemd/system/multi-user.target.wants"
+                    ln -sf "/etc/systemd/system/first-boot-update-overlays.service" "$NEW_ROOT/etc/systemd/system/multi-user.target.wants/first-boot-update-overlays.service"
+                fi
             fi
             umount "$NEW_ROOT/boot/p1"
         fi

@@ -242,12 +242,13 @@ rename_host
 
 echo -e "${BLUE}Creating user 'nmfta'...${NC}"
 sudo chroot /mnt/${destination}p2 /bin/bash -c "
+groupadd -f tcat-ops
 if id 'nmfta' &>/dev/null; then
     deluser nmfta
 fi
 useradd -m -d /home/nmfta -s /bin/bash nmfta
 echo 'nmfta:$NEW_HOSTNAME' | chpasswd
-usermod -aG sudo nmfta
+usermod -aG sudo,tcat-ops nmfta
 passwd -l root
 chown -R nmfta:nmfta /home/nmfta
 "

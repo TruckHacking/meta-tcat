@@ -211,6 +211,18 @@ echo "[Target] Backing up host identity to RAMFS..."
 mkdir -p "$RAMFS_DIR/identity_backup"
 cp -p /etc/machine-id "$RAMFS_DIR/identity_backup/" 2>/dev/null || true
 cp -p /etc/ssh/ssh_host_* "$RAMFS_DIR/identity_backup/" 2>/dev/null || true
+cp -p /etc/hostname "$RAMFS_DIR/identity_backup/" 2>/dev/null || true
+
+# Backup nmfta user records
+grep "^nmfta:" /etc/passwd > "$RAMFS_DIR/identity_backup/passwd.nmfta" 2>/dev/null || true
+grep "^nmfta:" /etc/shadow > "$RAMFS_DIR/identity_backup/shadow.nmfta" 2>/dev/null || true
+grep "^nmfta:" /etc/group > "$RAMFS_DIR/identity_backup/group.nmfta" 2>/dev/null || true
+
+# Backup nmfta SSH authorized_keys if they exist
+mkdir -p "$RAMFS_DIR/identity_backup/ssh_keys"
+if [ -d "/home/nmfta/.ssh" ]; then
+    cp -rp /home/nmfta/.ssh/* "$RAMFS_DIR/identity_backup/ssh_keys/" 2>/dev/null || true
+fi
 
 # --- Pivot Root ---
 echo "[Target] Preparing to pivot root..."
