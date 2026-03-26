@@ -116,8 +116,6 @@ CAN_TOOLS = " \
     can-conf \
  "
 
-PREFERRED_PROVIDER_python3-scapy = "python3-scapy-j1939"
-PREFERRED_VERSION_python = "2.7"
 PYTHON_TOOLS = " \
     python \
     python-modules \

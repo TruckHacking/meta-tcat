@@ -34,5 +34,6 @@ RDEPENDS:${PN} = " \
     python3-qgridnext \
     python3-z3-solver \
     python3-bokeh \
+    python3-tabulate \
 "
 FILES:${PN} += "${datadir}/automotive_scapy_playground"
