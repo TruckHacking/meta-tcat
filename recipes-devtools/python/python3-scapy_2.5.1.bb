@@ -13,7 +13,7 @@ LICENSE = "GPL-2.0-only"
 
 LIC_FILES_CHKSUM = "file://LICENSE;md5=b234ee4d69f5fce4486a80fdaf4a4263"
 
-SRCREV = "57a6e2babbee0aa162614a1168569544fab305f9"
+SRCREV = "4df303a84d057865ca220974fbda8d0fd4c26f0f"
 SRC_URI = "git://github.com/BenGardiner/scapy.git;branch=j1939_scanning;protocol=https \
            file://run-ptest"
 
