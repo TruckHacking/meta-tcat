@@ -1,20 +1,29 @@
 c = get_config()
-c.NotebookApp.enable_mathjax = False
-
-# Accept connections from any IP on your local network
-c.NotebookApp.ip = '0.0.0.0'
+c.ServerApp.ip = '0.0.0.0'
 
 # Do not try to open a browser on the BeagleBone
-c.NotebookApp.open_browser = False
+c.ServerApp.open_browser = False
 
 # Set a static port (default is 8888)
-c.NotebookApp.port = 8888
+c.ServerApp.port = 8888
 
 # Set max buffer size to 10MB
-c.NotebookApp.max_buffer_size = 10485760
+c.ServerApp.max_buffer_size = 10485760
+
+# Performance: Disable heavy extensions
+c.ServerApp.jpserver_extensions = {
+    'jupyter_lsp': False
+}
+
+# Performance: Disable the LSP (Language Server Protocol) completely
+c.LanguageServerApp.enabled = False
+
+# Performance: Disable background debugger threads in IPython kernels
+# This prevents ipykernel from starting the debugpy background listener
+c.IPythonKernel.use_debugpy = False
 
 import subprocess
-from notebook.notebookapp import NotebookApp
+from jupyter_server.serverapp import ServerApp
 
 def get_all_ips():
     ips = []
@@ -43,18 +52,15 @@ def get_all_ips():
 def custom_display_url_property(self):
     ips = get_all_ips()
     urls = []
-    for ip in ips:
-        url = self._tcp_url(ip)
-        if getattr(self, 'token', None):
-            url = self._concat_token(url)
-        urls.append(url)
+    try:
+        parts = self._get_urlparts(include_token=True)
+        for ip in ips:
+            netloc = f"{ip}:{self.port}"
+            urls.append(parts._replace(netloc=netloc).geturl())
+    except Exception:
+        pass
     
     notice = "NOTICE: These numeric IP addresses are the recommended way to connect:\n        "
     return notice + "\n    or  ".join(urls)
 
-NotebookApp.display_url = property(custom_display_url_property)
-
-# Optional: Set a password so you don't have to copy tokens every time
-# from notebook.auth import passwd
-# You can generate a hash by running `passwd()` in a python shell
-# c.NotebookApp.password = u'sha1:your_generated_hash_here'
+ServerApp.display_url = property(custom_display_url_property)
