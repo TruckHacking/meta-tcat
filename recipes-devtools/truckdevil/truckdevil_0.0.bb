@@ -1,7 +1,7 @@
 # TODO: update this with TCP enabled truckdevil
 DESCRIPTION = "Useful in interacting with trucks that use J1939"
 SECTION = "devel/python"
-LICENSE = "GPL-3.0"
+LICENSE = "GPL-3.0-only"
 LIC_FILES_CHKSUM = "file://${WORKDIR}/git/LICENSE.md;md5=1ebbd3e34237af26da5dc08a4e440464"
 
 # using the TCP version of TruckDevil
@@ -9,7 +9,7 @@ SRC_URI = "git://github.com/BenGardiner/TruckDevil.git;protocol=https;branch=pre
            file://truckdevil"
 
 SRCREV_pretty = "47df0c16b3b70e098f39133bc84f6304acd1ff05"
-SRCREV_tab_completion = "8c5e5a321e0b80b8099daa495b03fad4229e0fae"
+SRCREV_tab_completion = "dc425b4b2507139563dc8a43ed1ca943cab44c6a"
 SRCREV_FORMAT = "pretty_tab_completion"
 SRCREV = "${SRCREV_pretty}"
 
