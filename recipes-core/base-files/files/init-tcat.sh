@@ -63,3 +63,4 @@ if [ "$EUID" -eq 0 ]; then
 else
     export PS1="\[$greenf\]\h\[$reset\]:\[$greenfbright\]\w\[$reset\]\$ "
 fi
+export PYDEVD_DISABLE_FILE_VALIDATION=1

@@ -1,6 +1,5 @@
 # ~/.bashrc: executed by bash(1) for non-login shells.
 umask 022
-# export PS1='\h:\w\$ '
 
 
 # You may uncomment the following lines if you want `ls' to be colorized:
@@ -41,4 +40,3 @@ initializeANSI()
 
 initializeANSI
 
-export PS1="\[$greenf\]\h\[$reset\]:\[$greenfbright\]\w\[$reset\]\$ "
