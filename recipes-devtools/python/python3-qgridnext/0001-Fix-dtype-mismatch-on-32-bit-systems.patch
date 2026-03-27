@@ -1,0 +1,23 @@
+Subject: [PATCH] Fix dtype mismatch on 32-bit systems
+
+On 32-bit ARM systems, pandas expects intp_t (int32) for the index,
+but range() can be converted to long long (int64) by numpy/pandas
+under some conditions (Python 3.12, Pandas 2.x).
+Using np.arange(..., dtype=np.intp) ensures the correct integer type
+is used for the platform.
+
+Upstream-Status: Inappropriate [embedded specific]
+Signed-off-by: Gemini CLI <gemini-cli@google.com>
+
+--- a/qgridnext/grid.py
++++ b/qgridnext/grid.py
+
+@@ -798,7 +798,7 @@
+ 
+         # insert a column which we'll use later to map edits from
+         # a filtered version of this df back to the unfiltered version
+-        self._df.insert(0, self._index_col_name, range(0, len(self._df)))
++        self._df.insert(0, self._index_col_name, np.arange(len(self._df), dtype=np.intp))
+ 
+         # keep an unfiltered version to serve as the starting point
+         # for filters, and the state we return to when filters are removed

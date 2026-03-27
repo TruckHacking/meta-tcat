@@ -1,0 +1,22 @@
+Subject: [PATCH] Fix dtype mismatch on 32-bit systems
+
+In BlockManager._rebuild_blknos_and_blklocs, the length (shape[0]) might be 
+treated as a 64-bit integer, while the pre-allocated new_blknos and new_blklocs
+arrays expect intp_t (32-bit on ARM). 
+
+Force the dtype to be intp specifically.
+
+Upstream-Status: Inappropriate [embedded specific]
+Signed-off-by: Gemini CLI <gemini-cli@google.com>
+
+--- a/pandas/_libs/internals.pyx
++++ b/pandas/_libs/internals.pyx
+@@ -746,7 +746,7 @@
+         """
+         cdef:
+             intp_t blkno, i, j
+-            cnp.npy_intp length = self.shape[0]
++            cnp.npy_intp length = <cnp.npy_intp>self.shape[0]
+             SharedBlock blk
+             BlockPlacement bp
+             ndarray[intp_t, ndim=1] new_blknos, new_blklocs
