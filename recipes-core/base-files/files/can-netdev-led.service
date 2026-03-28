@@ -1,7 +1,8 @@
 [Unit]
 Description=Configure CAN Netdev LED on boot
-After=network.target
+After=network.target rename-can-itf.service
 Requires=network.target
+Wants=rename-can-itf.service
 
 [Service]
 Type=oneshot
