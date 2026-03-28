@@ -104,6 +104,8 @@ EXTRA_TOOLS_INSTALL = " \
 
 CAN_TOOLS = " \
     can-utils \
+    can-utils-isotp \
+    can-utils-j1939 \
     libsocketcan \
     libsocketcan-dev \
     iproute2 \
