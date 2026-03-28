@@ -137,6 +137,7 @@ PYTHON3_TOOLS = " \
     python3-cmap \
     python3-cantools \
     python3-six \
+    python3-readline \
     python3-cancat \
     python3-canmatrix \
     python3-future \
@@ -146,7 +147,6 @@ PYTHON3_TOOLS = " \
     python3-attrs \
     python3-pyserial \
     python3-typing-extensions \
-    python3-dev \
     python3-asyncio-glib \
     python3-dill \
     python3-bitstring \

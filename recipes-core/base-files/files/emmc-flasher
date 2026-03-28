@@ -59,27 +59,15 @@ cylon_leds () {
 }
 
 partition_drive () {
-fdisk /dev/${destination} << EOM
-o
-p
-n
-p
-1
-2048
-+128M
-y
-t
-c
-a
-1
-n
-p
-2
+# Create partition table and partitions using sfdisk
+# Partition 1: 128M, FAT32 (type c), Bootable
+# Partition 2: Remaining space, Linux (type 83)
+sfdisk /dev/${destination} << EOM
+label: dos
+unit: sectors
 
-
-y
-p
-w
+/dev/${destination}p1 : start=2048, size=262144, type=c, bootable
+/dev/${destination}p2 : start=264192, type=83
 EOM
 
 flush_cache
