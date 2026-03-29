@@ -1,7 +1,7 @@
 SUMMARY = "Automotive Scapy Playground"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=45b26d404801eadc33ba5b829b12d3d7"
-SRCREV = "72e80d3cff3d2b9c21f5248ee7009de9685d50c1"
+SRCREV = "e44af7f3bc28b4838acd2e529987058ea806a5de"
 SRC_URI = "git://github.com/BenGardiner/automotive_scapy_playground.git;protocol=https;branch=main \
            file://start-playground.sh"
 
