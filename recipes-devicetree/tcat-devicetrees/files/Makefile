@@ -2,7 +2,7 @@
 DTC = dtc
 
 # dt-bindings directory
-DT_BINDINGS_DIR = /usr/lib/modules/$(shell uname -r)/build/include/dt-bindings
+DT_BINDINGS_DIR = $(shell ls -d /usr/lib/modules/*/build/include/dt-bindings | head -n 1)
 SRC_DIR = .
 OUT_DIR = /boot/dtb/tcat
 
