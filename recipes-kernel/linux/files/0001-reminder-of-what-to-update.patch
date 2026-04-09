@@ -26,7 +26,7 @@ index ea205b720764..251ff5f2bbdd 100644
 +};
 +
 +&am33xx_pinmux {
-+    pinctrl-0 = <&dcan0_pins &dcan1_pins &uart2_pins &uart4_pins &uart4_pins &i2c1_pins &gpio_pins &timer_pins>;
++    pinctrl-0 = <&dcan0_pins &dcan1_pins &i2c1_pins &gpio_pins &timer_pins>;
 +
 +    uart2_pins: pinxmux_uart2_pins {
 +	pinctrl-single,pins = <
@@ -147,11 +147,11 @@ index ea205b720764..251ff5f2bbdd 100644
 +};
 +
 +&uart2 {
-+    status = "okay";
++    status = "disabled";
 +};
 +
 +&uart4 {
-+    status = "okay";
++    status = "disabled";
 +};
 +
 +
