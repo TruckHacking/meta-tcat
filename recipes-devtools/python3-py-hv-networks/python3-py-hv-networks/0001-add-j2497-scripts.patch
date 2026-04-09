@@ -1,0 +1,40 @@
+From e4ab4a71b26ddf56f1837a7b5ed0b8fcf6cb374a Mon Sep 17 00:00:00 2001
+From: Gemini CLI <gemini-cli@google.com>
+Date: Sun, 29 Mar 2026 00:00:00 +0000
+Subject: [PATCH] Add j2497dump and j2497send convenience scripts
+
+These scripts default to the plc interface to communicate with the plc4trucksduck daemon.
+
+---
+ j2497dump.py | 6 ++++++
+ j2497send.py | 6 ++++++
+ 2 files changed, 12 insertions(+)
+ create mode 100755 j2497dump.py
+ create mode 100755 j2497send.py
+
+diff --git a/j2497dump.py b/j2497dump.py
+new file mode 100755
+index 0000000..f98642e
+--- /dev/null
++++ b/j2497dump.py
+@@ -0,0 +1,6 @@
++#!/usr/bin/env python3
++import sys
++import runpy
++
++sys.argv = ["j1708dump", "--j1708-interface", "plc"] + sys.argv[1:]
++runpy.run_path("/usr/bin/j1708dump", run_name="__main__")
+diff --git a/j2497send.py b/j2497send.py
+new file mode 100755
+index 0000000..13e6488
+--- /dev/null
++++ b/j2497send.py
+@@ -0,0 +1,6 @@
++#!/usr/bin/env python3
++import sys
++import runpy
++
++sys.argv = ["j1708send", "--j1708-interface", "plc"] + sys.argv[1:]
++runpy.run_path("/usr/bin/j1708send", run_name="__main__")
+-- 
+2.34.1
