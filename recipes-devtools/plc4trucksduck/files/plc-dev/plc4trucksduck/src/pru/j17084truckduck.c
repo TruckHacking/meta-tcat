@@ -54,7 +54,10 @@
 #define CYCLES_PER_HALF_BIT 10400
 #define CHECKS_TILL_BUS_IDLE 20
 
-#define CHECKS_TILL_MSG_FINISHED 11 // number of half bit intervals to wait (was 13)
+/* 15 bit times delay for message break:
+// Max delay to receive next byte is 15 bit times (10 for char + up to 5 idle gap).
+// 15 bit times * 2 half-bits/bit = 30 checks. */
+#define CHECKS_TILL_MSG_FINISHED 30
 
 #define J1708 // Remove if not testing UART
 // #define J1708_TESTING // Remove if not testing J1708 with THVD1410
@@ -80,30 +83,72 @@ void main() {
     memset(transmitBuf, 0, RPMSG_MESSAGE_SIZE);
 
     while (1) {
-        // Is there a message to transmit?
-        if (transmitBuf[0] != 0 || pru_rpmsg_receive(&transport, &src, &dst, transmitBuf, &len) == PRU_RPMSG_SUCCESS) {
-            if (isBusIdle(CHECKS_TILL_BUS_IDLE)) {
-                // Send MID. Using uartWrite over uartPutC so that it waits to
-                // return until byte is transmitted.
-                uartWrite(transmitBuf, 1);
-                // Arbitration: Send MID. If we recv anything and our MID is
-                // greater then we lose arbitration. Otherwise continue
-                // writing the message.
-                if (uartGetC(&receiveBuf[0]) && transmitBuf[0] > receiveBuf[0]) {
-                    // We lost arbitration so read the remaining message.
-                    uint16_t recvLen = receiveRemainingMessage(&receiveBuf[1]);
-                    pru_rpmsg_send(&transport, dst, src, receiveBuf, recvLen+1);
-                } else {
-                    // Either no one else is talking or we won arbitration
-                    // uartWrite will only return once all bytes have been sent.
-                    uartWrite(transmitBuf + 1, len - 1);
-                    // Clear transmitBuf so we know its been sent
-                    memset(transmitBuf, 0, RPMSG_MESSAGE_SIZE);
+        // Is there a message to transmit from the host?
+        if (pru_rpmsg_receive(&transport, &src, &dst, transmitBuf, &len) == PRU_RPMSG_SUCCESS) {
+            if (len > 0) {
+                /* 
+                 * =========================================================================
+                 * PROVEN J1708 TRANSMIT LOGIC
+                 * =========================================================================
+                 * This pacing is identical to the J2497/PLC modem pacing logic.
+                 *
+                 * The mandatory transmission sequence is:
+                 * 1. Send Byte 1 (MID).
+                 * 2. Wait for the hardware echo to arrive.
+                 * 3. Perform J1708 arbitration check on the echoed byte.
+                 * 4. Delay exactly 2 bit-times (~208us) AFTER receiving the echo.
+                 * 5. Send Byte 2.
+                 * 6. Delay exactly 2 bit-times (~208us) AFTER Byte 2 has fully shifted out.
+                 * 7. Send the remaining bytes (Byte 3..N) with exactly 1 bit-time (~104us)
+                 *    idle gaps between each byte.
+                 * =========================================================================
+                 */
+
+                // Clear any stale noise from the RX FIFO before transmitting
+                uint8_t dummy_rx;
+                while (uartGetC(&dummy_rx));
+
+                /* 1. Send the first byte (MID) */
+                uartPutC(transmitBuf[0]);
+                uartWaitUntilTxEmpty();
+
+                /* 2. Wait for echo of the first byte */
+                uint8_t rx = hw_wait_and_read_char();
+                injected_rx_byte = rx;
+                has_injected_rx_byte = 1;
+
+                /* 3. Check equality */
+                if (rx == transmitBuf[0]) {
+                    /* 4. Wait exactly two bit times (208us) */
+                    __delay_cycles(41600);
+
+                    if (len > 1) {
+                        /* Send the second byte */
+                        uartPutC(transmitBuf[1]);
+                        uartWaitUntilTxEmpty();
+
+                        if (len > 2) {
+                            /* 5. 2 bit time gap (208us) between second and third byte */
+                            __delay_cycles(41600);
+
+                            /* 6. Transmit the rest of the bytes with 1 bit time gap (104us) */
+                            for (uint16_t i = 2; i < len; ++i) {
+                                uartPutC(transmitBuf[i]);
+                                uartWaitUntilTxEmpty();
+                                
+                                if (i < len - 1) {
+                                    __delay_cycles(20800);
+                                }
+                            }
+                        }
+                    }
+                    uartWaitUntilTxEmpty();
                 }
             }
-        } else if (uartGetC(receiveBuf)) { // Is there anything to receive?
-            uint16_t recvLen = receiveRemainingMessage(&receiveBuf[1]);
-            pru_rpmsg_send(&transport, dst, src, receiveBuf, recvLen+1);
+        } else if (UART_BASE[UART_LSR] & 0x01 || has_injected_rx_byte) { 
+            // Is there anything to receive from the UART or from our injected echo?
+            uint16_t recvLen = receiveRemainingMessage(&receiveBuf[0]);
+            pru_rpmsg_send(&transport, dst, src, receiveBuf, recvLen);
             memset(receiveBuf, 0, MAX_PAYLOAD_LEN);
         }
     }

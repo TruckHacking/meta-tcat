@@ -9,6 +9,18 @@ inherit systemd
 SYSTEMD_SERVICE:${PN} = "plc4trucksduck.service"
 SYSTEMD_AUTO_ENABLE = "enable"
 
+DEPENDS += "ti-cgt-pru-native dtc-native"
+
+do_compile() {
+    # compile C host tools
+    ${CC} ${CFLAGS} ${LDFLAGS} ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/plc4trucksduck_host.c -o ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/plc4trucksduck_host_c -lpthread
+    ${CC} ${CFLAGS} ${LDFLAGS} ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/j1708send.c -o ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/j1708send_c
+    ${CC} ${CFLAGS} ${LDFLAGS} ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/j1708dump.c -o ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/j1708dump_c
+
+    # compile PRU firmware
+    make -C ${WORKDIR}/plc-dev/plc4trucksduck PRU_CGT=${STAGING_DATADIR_NATIVE}/ti/cgt-pru CLPRU=${STAGING_DATADIR_NATIVE}/ti/cgt-pru/bin/clpru
+}
+
 do_install(){
 
     # make a backup of development environment
@@ -19,13 +31,22 @@ do_install(){
     install -d ${D}/usr/bin
     install -d ${D}/usr/lib/firmware
 
-    # firmware (needs to be copied becuase of objcopy errors in Yocto)
+    # firmware (using newly compiled outputs)
     cp ${WORKDIR}/plc-dev/plc4trucksduck/src/pru/generated/plc4trucksduck.out ${D}/usr/lib/firmware/am335x-pru0-fw
     cp ${WORKDIR}/plc-dev/plc4trucksduck/src/pru/generated/j17084truckduck.out ${D}/usr/lib/firmware/am335x-pru1-fw
 
     # user space code (has to be root to access PRU)
-    install -m 0755 ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/plc4trucksduck_host ${D}/usr/bin/
-    install -m 0755 ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/j17084truckduck_host ${D}/usr/bin/
+    install -m 0755 ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/plc4trucksduck_host_c ${D}/usr/bin/plc4trucksduck_host
+    install -m 0755 ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/plc4trucksduck_host_c ${D}/usr/bin/j17084truckduck_host
+    
+    install -m 0755 ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/plc4trucksduck_host ${D}/usr/bin/plc4trucksduck_host.py
+    install -m 0755 ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/j17084truckduck_host ${D}/usr/bin/j17084truckduck_host.py
+    
+    # client tools
+    install -m 0755 ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/j1708send_c ${D}/usr/bin/j1708send
+    install -m 0755 ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/j1708dump_c ${D}/usr/bin/j1708dump
+    ln -s j1708send ${D}/usr/bin/j2497send
+    ln -s j1708dump ${D}/usr/bin/j2497dump
 
     # services
     install -d ${D}${systemd_system_unitdir}
@@ -38,11 +59,10 @@ do_install(){
 
 FILES:${PN} += "${TARGET_DIR} \
                 /usr/lib/*"
-FILES:${PN} += "${systemd_system_unitdir}/plc4trucksduck.service"
+FILES:${PN} += "${systemd_system_unitdir}/*.service"
 
 # only one can be enabled at a time with PRU resources available
-RDEPENDS:${PN} += "python3-core python3 bash"
 # _hard requirement_ on 6.6.32 due to pre-compiled pru binary
-RDEPENDS:${PN} += "kernel-base (= 6.6.32)"
+RDEPENDS:${PN} += "kernel-base (= 6.6.32) bash python3-core python3"
 # this package has firmware blobs so we skip the QA consistency check
-INSANE_SKIP:${PN} += "arch"
+INSANE_SKIP:${PN} += "arch buildpaths file-rdeps"

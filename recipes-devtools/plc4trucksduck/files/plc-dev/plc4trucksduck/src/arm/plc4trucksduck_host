@@ -55,19 +55,20 @@ def netdev_leds(rx_event):
     # set path
     led = "/sys/class/leds/uthp:led2"
     # set rx and tx emulation
-    while not exit_event.is_set():
-        if rx_event.wait(timeout=1):
-            rx_event.clear()
-            try:
-                with open(led + "/brightness", 'w') as f:
+    try:
+        with open(led + "/brightness", 'w') as f:
+            while not exit_event.is_set():
+                if rx_event.wait(timeout=1):
+                    rx_event.clear()
                     f.write("1")
-                time.sleep(0.05)
-                with open(led + "/brightness", 'w') as f:
+                    f.flush()
+                    time.sleep(0.05)
                     f.write("0")
-                time.sleep(0.05)
-            except IOError as e:
-                logging.error("Error writing to LED: %s", e)
-                break
+                    f.flush()
+                    time.sleep(0.05)
+    except IOError as e:
+        logging.error("Error writing to LED: %s", e)
+        exit_event.set()
 
 def signal_handler(sig, frame):
     logging.info("Signal received, exiting...")
@@ -137,12 +138,16 @@ def read_from_pru(rpmsg_fd, send_sockets):
                         else:
                             dest = ("255.255.255.255", CLIENT_PORT)
                         sock.sendto(data, dest)
-                        logging.info("Sent from interface %s (%s) to %s:%d",
-                                     iface, local_ip, dest[0], dest[1])
-                    logging.info("Received from PRU: %s", data.hex())
-                    logging.info("Timestamp: %s", time.time())
+                        # logging.info("Sent from interface %s (%s) to %s:%d",
+                        #              iface, local_ip, dest[0], dest[1])
+                    # logging.info("Received from PRU: %s", data.hex())
+                    # logging.info("Timestamp: %s", time.time())
+                else:
+                    # If select says ready but read is empty, yield to prevent 100% CPU spin
+                    time.sleep(0.001)
             except OSError as e:
                 logging.error("Error reading from RPMsg: %s", e)
+                exit_event.set()
                 break
 
 def write_to_pru(rpmsg_fd, recv_sockets):
@@ -158,13 +163,14 @@ def write_to_pru(rpmsg_fd, recv_sockets):
                 if sock:
                     try:
                         frame, addr = sock.recvfrom(PAYLOAD_LEN)
-                        logging.info("Received UDP from %s on %s: %s",
-                                     addr, sock.getsockname()[0], frame.hex())
+                        # logging.info("Received UDP from %s on %s: %s",
+                        #              addr, sock.getsockname()[0], frame.hex())
                         os.write(rpmsg_fd, frame[:PAYLOAD_LEN])
-                        logging.info("Sent to PRU: %s", frame.hex())
-                        logging.info("Timestamp: %s", time.time())
+                        # logging.info("Sent to PRU: %s", frame.hex())
+                        # logging.info("Timestamp: %s", time.time())
                     except OSError as e:
                         logging.error("Error writing to RPMsg: %s", e)
+                        exit_event.set()
                         break
 
 def flush_rpmsg(rpmsg_fd):

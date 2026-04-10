@@ -1,0 +1,46 @@
+--- meta-tcat/recipes-devtools/plc4trucksduck/files/plc-dev/plc4trucksduck/src/arm/plc4trucksduck_host.c
++++ meta-tcat/recipes-devtools/plc4trucksduck/files/plc-dev/plc4trucksduck/src/arm/plc4trucksduck_host.c
+@@ -105,6 +105,7 @@
+             if (bind(r_sock, (struct sockaddr*)&bind_addr, sizeof(bind_addr)) == 0) {
+                 fcntl(r_sock, F_SETFL, O_NONBLOCK);
+                 recv_socks[num_ifaces] = r_sock;
++                LOG_INFO("Receive socket bound on interface (IP %s) port %d", inet_ntoa(sa->sin_addr), server_port);
+             } else {
+                 close(r_sock);
+                 continue;
+@@ -118,6 +119,7 @@
+             if (bind(s_sock, (struct sockaddr*)&bind_addr, sizeof(bind_addr)) == 0) {
+                 fcntl(s_sock, F_SETFL, O_NONBLOCK);
+                 send_socks[num_ifaces] = s_sock;
++                LOG_INFO("Send socket bound on interface (IP %s)", inet_ntoa(sa->sin_addr));
+             } else {
+                 close(s_sock);
+                 close(r_sock);
+@@ -148,6 +150,13 @@
+                     dest.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+                 }
+                 sendto(send_socks[i], data, n, 0, (struct sockaddr*)&dest, sizeof(dest));
++                
++                if (verbose) {
++                    printf("PRU->UDP: ");
++                    for(int j=0; j<n; j++) printf("%02x", (unsigned char)data[j]);
++                    printf("\n");
++                    fflush(stdout);
++                }
+             }
+         } else if (n < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+             exit_event = 1;
+@@ -176,6 +185,12 @@
+                     if (n > 0) {
+                         if (write(rpmsg_fd, data, n) < 0) {
+                             exit_event = 1;
+                             break;
+                         }
++                        if (verbose) {
++                            printf("UDP->PRU: ");
++                            for(int j=0; j<n; j++) printf("%02x", (unsigned char)data[j]);
++                            printf("\n");
++                            fflush(stdout);
++                        }
+                     }
+                 }

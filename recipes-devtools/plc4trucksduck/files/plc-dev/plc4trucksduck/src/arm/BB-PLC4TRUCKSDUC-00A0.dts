@@ -40,6 +40,10 @@
             P9_22_pinmux { status = "disabled"; };  /* uart2_rxd */
             P9_11_pinmux { status = "disabled"; };  /* uart4_rxd */
             P9_13_pinmux { status = "disabled"; };  /* uart4_txd */
+            
+            /* Disable kernel drivers for these UARTs */
+            uart2: uart@48024000 { status = "disabled"; };
+            uart4: uart@481a8000 { status = "disabled"; };
         };
     };
 
@@ -62,7 +66,7 @@
                 pinctrl-single,pins = <
                     0x074 0x06  /* P9.13: uart4_txd : MODE6 */
                     0x070 0x26  /* P9.11: uart4_rxd : MODE6 | RX_ACTIVE */
-                    0x0e8 0x37  /* P9.12: gpio2[24] : MODE7 | RX_ACTIVE -- high -- (GPIO_60) */
+                    0x07c 0x37  /* P8.28: gpio2[24] : MODE7 | RX_ACTIVE -- GPIO 88 */
                 >;
             };
         };

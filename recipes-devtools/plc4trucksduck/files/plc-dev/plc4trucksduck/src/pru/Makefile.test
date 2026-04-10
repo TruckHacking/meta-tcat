@@ -1,0 +1,5 @@
+test:
+	mkdir -p mock
+	touch mock/pru_cfg.h mock/pru_intc.h mock/pru_ctrl.h mock/pru_rpmsg.h mock/intc_map_0.h mock/common.h
+	gcc -I mock -I . -o test_pru test_pru.c
+	./test_pru

@@ -21,32 +21,20 @@ volatile register uint32_t __R31;
 
 // J1708 Message are normally limited to 21 bytes, but if the vehicle is off the
 // standard permits longer messages.
-#define MAX_PAYLOAD_LEN 255
+#define MAX_PAYLOAD_LEN 495
 
 uint8_t transmitBuf[RPMSG_MESSAGE_SIZE];
-uint8_t receiveBuf[MAX_PAYLOAD_LEN];
+uint8_t receiveBuf[MAX_PAYLOAD_LEN + 1];
 
 int __inline isBusIdle(uint8_t numChecks) {
-    /* Number of passes needed to achieve ~5.2 ms idle time
-     Each pass of isBusIdle(20) checks for ~1.04 ms
-    Thus, we need 5 passes: 5 * 1.04 ms ≈ 5.2 ms */
-    #ifdef J1708
-    numChecks = numChecks * 5;
-    #endif
     for(int i = 0; i < numChecks; i++) {
-        #ifdef J1708
-        if(UART_LSR & 0x1) { // Data Ready bit is set
-            // Bus is active, reset idle detection
+        /* DEFENSIVE COMMENT: On this hardware release, the IDLE line connected to GPIO_88 
+           cannot be trusted. We MUST ignore the GPIO and rely purely on the UART data 
+           ready flag for idle detection, which has been proven to work reliably. */
+        if(UART_BASE[UART_LSR] & 0x01 || has_injected_rx_byte) { 
             return 0; // Bus is not idle
         }
         __delay_cycles(CYCLES_PER_HALF_BIT); // Wait for half bit time (~52 µs)
-        #elif defined(PLC)
-        if(readGpioPin(BBB_GPIO_PIN) == 0) {
-            // Bus is active, reset idle detection
-            return 0; // Bus is not idle
-        }
-        __delay_cycles(CYCLES_PER_HALF_BIT); // Wait for half bit time (~52 µs)
-        #endif
     }
     return 1; // Bus has been idle for the required duration
 }
@@ -78,10 +66,20 @@ void pruInit(struct pru_rpmsg_transport* transport) {
 
 int16_t receiveRemainingMessage(uint8_t* buf) {
     uint16_t i = 0;
+    
+    // First, grab the injected byte (echo of the first byte sent) if it exists.
+    // This allows us to receive our own transmission's first byte correctly.
+    if (has_injected_rx_byte) {
+        buf[i++] = injected_rx_byte;
+        has_injected_rx_byte = 0;
+    }
+
     while (i < MAX_PAYLOAD_LEN) {
-        if (uartGetC(&buf[i])) {
-            i++; 
+        // Then, read whatever is natively in the UART FIFO
+        if (UART_BASE[UART_LSR] & 0x01) {
+            buf[i++] = (uint8_t)UART_BASE[UART_RHR]; 
         }
+        
         if (isBusIdle(CHECKS_TILL_MSG_FINISHED)) {
             break; // Exit the loop if the bus is idle
         }

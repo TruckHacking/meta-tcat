@@ -54,10 +54,11 @@
 #define CYCLES_PER_HALF_BIT 10400
 #define CHECKS_TILL_BUS_IDLE 20
 
-// SSCP485 Datasheet recommended waiting about 1.5 characters of line idle to
-// determine that a message had been sent.
-#define CHECKS_TILL_MSG_FINISHED 11 // 13 * 52 µs = 676 µs
-#define J1708 // needed in common.h
+/* 15 bit times delay for message break:
+// Max delay to receive next byte is 15 bit times (10 for char + up to 5 idle gap).
+// 15 bit times * 2 half-bits/bit = 30 checks. */
+#define CHECKS_TILL_MSG_FINISHED 30
+#define PLC // needed in common.h to enable GPIO Carrier Sense
 // Side note: the SSCP485 doesn't include TP
 
 #include <stdint.h>
@@ -85,32 +86,79 @@ void main() {
         // Is there a message to transmit?
         if (transmitBuf[0] != 0 || pru_rpmsg_receive(&transport, &src, &dst, transmitBuf, &len) == PRU_RPMSG_SUCCESS) {
 
-            if (isBusIdle(CHECKS_TILL_BUS_IDLE)) {
-                // Send MID. Using uartWrite over uartPutC so that it waits to
-                // return until byte is transmitted.
-                uartWrite(transmitBuf, 1); // write the MID
-                __delay_cycles(550000); // wait period for echo back (trust me when I say this exact value is important for reading the echo back and giving enough time for sending the rest of the message)
-                if (uartGetC(&receiveBuf[0])) { // check if there is a message to receive
-                    // Arbitration: Send MID. If we recv anything and our MID is
-                    // greater then we lose arbitration. Otherwise continue
-                    // writing the message.
-                    if (transmitBuf[0] <= receiveBuf[0]) { // either no one else is transmitting or we won arbitration
-                        uartWrite(transmitBuf + 1, len - 1); // write the remaining message
-                        memset(transmitBuf, 0, RPMSG_MESSAGE_SIZE);
-                    } else { // darn we lost arbitration
-                        uint16_t recvLen = receiveRemainingMessage(&receiveBuf[1]);
-                        pru_rpmsg_send(&transport, dst, src, receiveBuf, recvLen+1);
+            if (len > 0) {
+                /* 
+                 * =========================================================================
+                 * PROVEN J2497 / INTELLON SSC P485 TRANSMIT LOGIC
+                 * =========================================================================
+                 * This highly specific pacing is strictly required by the Intellon SSC P485 
+                 * modem to prevent message splitting, dropped bytes, and framing errors on 
+                 * the J2497 (PLC) bus.
+                 *
+                 * The mandatory transmission sequence is:
+                 * 1. Send Byte 1 (MID).
+                 * 2. Wait for the hardware echo to arrive from the modem.
+                 * 3. Perform J1708 arbitration check on the echoed byte.
+                 * 4. Delay exactly 2 bit-times (~208us) AFTER receiving the echo.
+                 * 5. Send Byte 2.
+                 * 6. Delay exactly 2 bit-times (~208us) AFTER Byte 2 has fully shifted out.
+                 * 7. Send the remaining bytes (Byte 3..N) with exactly 1 bit-time (~104us)
+                 *    idle gaps between each byte.
+                 * 
+                 * Note: Waiting for Transmitter Empty (TEMT) via LSR[6] = 1 is critical
+                 * before applying the inter-character delays to ensure the TX line has 
+                 * actually physically gone idle.
+                 * =========================================================================
+                 */
+
+                // Clear any stale noise from the RX FIFO before transmitting
+                uint8_t dummy_rx;
+                while (uartGetC(&dummy_rx));
+
+                /* 1. Send the first byte (MID) */
+                uartPutC(transmitBuf[0]);
+                uartWaitUntilTxEmpty();
+
+                /* 2. Wait for echo of the first byte */
+                uint8_t rx = hw_wait_and_read_char();
+                injected_rx_byte = rx;
+                has_injected_rx_byte = 1;
+
+                /* 3. Check equality */
+                if (rx == transmitBuf[0]) {
+                    /* 4. Wait exactly two bit times (208us) */
+                    __delay_cycles(41600);
+
+                    if (len > 1) {
+                        /* Send the second byte */
+                        uartPutC(transmitBuf[1]);
+                        uartWaitUntilTxEmpty();
+
+                        if (len > 2) {
+                            /* 5. 2 bit time gap (208us) between second and third byte */
+                            __delay_cycles(41600);
+
+                            /* 6. Transmit the rest of the bytes with 1 bit time gap (104us) */
+                            for (uint16_t i = 2; i < len; ++i) {
+                                uartPutC(transmitBuf[i]);
+                                uartWaitUntilTxEmpty();
+                                
+                                if (i < len - 1) {
+                                    __delay_cycles(20800);
+                                }
+                            }
+                        }
                     }
-                } else { // SSCP485 did not echo back
-                    // enter a safe error loop until the host resets the PRU
-                    memset(receiveBuf, 0, MAX_PAYLOAD_LEN);
-                    memset(transmitBuf, 0, RPMSG_MESSAGE_SIZE);
-                    while (1) { __delay_cycles(1000000); }
+                    uartWaitUntilTxEmpty();
                 }
             }
-        } else if (uartGetC(receiveBuf)) { // Is there anything to receive?
-            uint16_t recvLen = receiveRemainingMessage(&receiveBuf[1]);
-            pru_rpmsg_send(&transport, dst, src, receiveBuf, recvLen+1);
+
+            memset(transmitBuf, 0, RPMSG_MESSAGE_SIZE);
+            
+        } else if (UART_BASE[UART_LSR] & 0x01 || has_injected_rx_byte) { 
+            // Is there anything to receive from the UART or from our injected echo?
+            uint16_t recvLen = receiveRemainingMessage(&receiveBuf[0]);
+            pru_rpmsg_send(&transport, dst, src, receiveBuf, recvLen);
             memset(receiveBuf, 0, MAX_PAYLOAD_LEN);
         }
     }

@@ -1,0 +1,15 @@
+--- plc4trucksduck_host.c
++++ plc4trucksduck_host.c
+@@ -185,6 +194,12 @@
+                     if (n > 0) {
+                         if (write(rpmsg_fd, data, n) < 0) {
+                             exit_event = 1;
+                             break;
+                         }
++                        if (verbose) {
++                            printf("UDP->PRU: ");
++                            for(int j=0; j<n; j++) printf("%02x", (unsigned char)data[j]);
++                            printf("\n");
++                            fflush(stdout);
++                        }
+                     }
