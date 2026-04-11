@@ -22,3 +22,8 @@ RDEPENDS:${PN} += " \
     python3-pyserial \
     python3-setuptools \
 "
+
+do_install:append() {
+    install -d ${D}${PYTHON_SITEPACKAGES_DIR}/truckdevil/resources/json_files
+    install -m 0644 ${S}/truckdevil/resources/json_files/* ${D}${PYTHON_SITEPACKAGES_DIR}/truckdevil/resources/json_files/
+}
