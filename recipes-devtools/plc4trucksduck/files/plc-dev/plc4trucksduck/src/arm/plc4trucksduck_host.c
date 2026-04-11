@@ -155,37 +155,44 @@ void* read_from_pru(void* arg) {
     int rpmsg_fd = *(int*)arg;
     char data[PAYLOAD_LEN];
     while (!exit_event) {
-        int n = read(rpmsg_fd, data, PAYLOAD_LEN);
-        if (n > 0) {
-            pthread_mutex_lock(&rx_mutex);
-            rx_flag = 1;
-            pthread_cond_signal(&rx_cond);
-            pthread_mutex_unlock(&rx_mutex);
+        fd_set readfds;
+        FD_ZERO(&readfds);
+        FD_SET(rpmsg_fd, &readfds);
 
-            if (verbose) {
-                printf("PRU->UDP: ");
-                for(int j=0; j<n; j++) printf("%02x", (unsigned char)data[j]);
-                printf("\n");
-                fflush(stdout);
-            }
+        struct timeval tv = {1, 0}; // 1 second timeout to check exit_event
+        int ready = select(rpmsg_fd + 1, &readfds, NULL, NULL, &tv);
 
-            for (int i = 0; i < num_ifaces; i++) {
-                struct sockaddr_in dest;
-                memset(&dest, 0, sizeof(dest));
-                dest.sin_family = AF_INET;
-                dest.sin_port = htons(client_port);
-                if (ntohl(recv_addrs[i].sin_addr.s_addr) == INADDR_LOOPBACK) {
-                    dest.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-                } else {
-                    dest.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+        if (ready > 0 && FD_ISSET(rpmsg_fd, &readfds)) {
+            int n = read(rpmsg_fd, data, PAYLOAD_LEN);
+            if (n > 0) {
+                pthread_mutex_lock(&rx_mutex);
+                rx_flag = 1;
+                pthread_cond_signal(&rx_cond);
+                pthread_mutex_unlock(&rx_mutex);
+
+                if (verbose) {
+                    printf("PRU->UDP: ");
+                    for(int j=0; j<n; j++) printf("%02x", (unsigned char)data[j]);
+                    printf("\n");
+                    fflush(stdout);
                 }
-                sendto(send_socks[i], data, n, 0, (struct sockaddr*)&dest, sizeof(dest));
+
+                for (int i = 0; i < num_ifaces; i++) {
+                    struct sockaddr_in dest;
+                    memset(&dest, 0, sizeof(dest));
+                    dest.sin_family = AF_INET;
+                    dest.sin_port = htons(client_port);
+                    if (ntohl(recv_addrs[i].sin_addr.s_addr) == INADDR_LOOPBACK) {
+                        dest.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+                    } else {
+                        dest.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+                    }
+                    sendto(send_socks[i], data, n, 0, (struct sockaddr*)&dest, sizeof(dest));
+                }
+            } else if (n < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+                exit_event = 1;
+                break;
             }
-        } else if (n < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
-            exit_event = 1;
-            break;
-        } else {
-            usleep(1000);
         }
     }
     return NULL;
@@ -247,6 +254,9 @@ int main(int argc, char** argv) {
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
             verbose = 1;
+        } else if (strcmp(argv[i], "--j1708-ports") == 0) {
+            server_port = 6969;
+            client_port = 6970;
         }
     }
 

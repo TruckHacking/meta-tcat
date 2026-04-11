@@ -1,0 +1,143 @@
+#!/bin/bash
+# set-tcat-pru - Dynamically set PRU0 firmware and host routing for TCAT
+
+PRU_SYSFS="/sys/class/remoteproc/remoteproc1"
+SERVICE="plc4trucksduck.service"
+OVERRIDE_DIR_RUN="/run/systemd/system/${SERVICE}.d"
+OVERRIDE_DIR_ETC="/etc/systemd/system/${SERVICE}.d"
+FW_DIR="/lib/firmware"
+
+show_help() {
+    echo "Usage: set-tcat-pru [MODE] [--persistent] | --status | --help"
+    echo "Dynamically configure the PRU0 firmware and host service."
+    echo ""
+    echo "Modes:"
+    echo "  j1708           - Load J1708 firmware to PRU0 and route host UDP to J1708 ports (6969/6970)"
+    echo "  plc             - (Alias for plc-default) Load standard PLC UART firmware and UDP ports"
+    echo "  plc-default     - Load standard PLC UART firmware and UDP ports (6971/6972)"
+    echo "  plc-bitbangtx   - Load PLC bitbanging firmware and UDP ports"
+    echo ""
+    echo "Options:"
+    echo "  --persistent    - Make the firmware and port changes persist across reboots."
+    echo "  --status        - Show current PRU0 firmware and active mode"
+    echo "  --help          - Display this help message"
+}
+
+show_status() {
+    if [ ! -d "$PRU_SYSFS" ]; then
+        echo "Error: PRU directory ($PRU_SYSFS) not found."
+        exit 1
+    fi
+    CURRENT_FW=$(cat $PRU_SYSFS/firmware)
+    CURRENT_STATE=$(cat $PRU_SYSFS/state)
+    echo "PRU0 Status ($PRU_SYSFS):"
+    echo "  State:    $CURRENT_STATE"
+    echo "  Firmware: $CURRENT_FW"
+    echo "Service Status ($SERVICE):"
+    if grep -q "\-\-j1708-ports" "$OVERRIDE_DIR_ETC/override.conf" 2>/dev/null || grep -q "\-\-j1708-ports" "$OVERRIDE_DIR_RUN/override.conf" 2>/dev/null; then
+        echo "  Mode:     j1708 (J1708 UDP Ports Active 6969/6970)"
+    else
+        echo "  Mode:     plc (Standard PLC UDP Ports Active 6971/6972)"
+    fi
+    if [ -f "$OVERRIDE_DIR_ETC/override.conf" ] || [ "$CURRENT_FW" = "am335x-pru0-fw" ]; then
+        echo "  Persistence: Configured for persistence (reboot will retain some/all settings)"
+    else
+        echo "  Persistence: Ephemeral (reboot will revert to default am335x-pru0-fw)"
+    fi
+}
+
+if [ $# -eq 0 ]; then
+    show_help
+    exit 1
+fi
+
+PERSISTENT=0
+MODE=""
+
+for arg in "$@"; do
+    case $arg in
+        --help|-h) show_help; exit 0 ;;
+        --status) show_status; exit 0 ;;
+        --persistent) PERSISTENT=1 ;;
+        -*) echo "Unknown option: $arg"; show_help; exit 1 ;;
+        *) MODE=$arg ;;
+    esac
+done
+
+if [ -z "$MODE" ]; then
+    echo "Error: No mode specified."
+    show_help
+    exit 1
+fi
+
+FW_NAME=""
+USE_J1708_PORTS=0
+
+if [ "$MODE" = "j1708" ]; then
+    FW_NAME="am335x-pru0-fw-j1708"
+    USE_J1708_PORTS=1
+elif [ "$MODE" = "plc" ] || [ "$MODE" = "plc-default" ]; then
+    FW_NAME="am335x-pru0-fw-default"
+elif [ "$MODE" = "plc-bitbangtx" ]; then
+    FW_NAME="am335x-pru0-fw-bitbang"
+else
+    echo "Error: Unknown mode '$MODE'"
+    show_help
+    exit 1
+fi
+
+if [ $PERSISTENT -eq 1 ]; then
+    echo "****************************************************************"
+    echo "WARNING: Applying PERSISTENT changes!"
+    echo "This will overwrite /lib/firmware/am335x-pru0-fw and systemd"
+    echo "configurations in /etc/systemd/system/."
+    echo "These changes WILL survive a reboot."
+    echo "****************************************************************"
+fi
+
+echo "Stopping $SERVICE..."
+systemctl stop $SERVICE 2>/dev/null
+
+if [ "$(cat $PRU_SYSFS/state 2>/dev/null)" = "running" ]; then
+    echo "Stopping PRU0..."
+    echo stop > $PRU_SYSFS/state
+fi
+
+echo "Loading firmware: $FW_NAME"
+if [ $PERSISTENT -eq 1 ]; then
+    cp -f "$FW_DIR/$FW_NAME" "$FW_DIR/am335x-pru0-fw"
+    echo "am335x-pru0-fw" > $PRU_SYSFS/firmware
+else
+    echo "$FW_NAME" > $PRU_SYSFS/firmware
+fi
+
+# Clean up old overrides
+rm -f $OVERRIDE_DIR_RUN/override.conf
+rm -f $OVERRIDE_DIR_ETC/override.conf
+rmdir $OVERRIDE_DIR_RUN 2>/dev/null || true
+rmdir $OVERRIDE_DIR_ETC 2>/dev/null || true
+
+if [ $USE_J1708_PORTS -eq 1 ]; then
+    echo "Configuring service for J1708 ports..."
+    if [ $PERSISTENT -eq 1 ]; then
+        TARGET_DIR=$OVERRIDE_DIR_ETC
+    else
+        TARGET_DIR=$OVERRIDE_DIR_RUN
+    fi
+    mkdir -p $TARGET_DIR
+    echo "[Service]" > $TARGET_DIR/override.conf
+    echo "ExecStart=" >> $TARGET_DIR/override.conf
+    echo "ExecStart=/usr/bin/plc4trucksduck_host --j1708-ports" >> $TARGET_DIR/override.conf
+else
+    echo "Configuring service for standard PLC ports..."
+fi
+
+systemctl daemon-reload
+
+echo "Starting PRU0..."
+echo start > $PRU_SYSFS/state
+
+echo "Starting $SERVICE..."
+systemctl start $SERVICE
+
+echo "Successfully set PRU0 to mode: $MODE (Persistent: $PERSISTENT)"

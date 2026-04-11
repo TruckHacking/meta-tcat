@@ -33,14 +33,16 @@ do_install(){
 
     # firmware (using newly compiled outputs)
     cp ${WORKDIR}/plc-dev/plc4trucksduck/src/pru/generated/plc4trucksduck.out ${D}/usr/lib/firmware/am335x-pru0-fw
-    cp ${WORKDIR}/plc-dev/plc4trucksduck/src/pru/generated/j17084truckduck.out ${D}/usr/lib/firmware/am335x-pru1-fw
+    cp ${WORKDIR}/plc-dev/plc4trucksduck/src/pru/generated/plc4trucksduck.out ${D}/usr/lib/firmware/am335x-pru0-fw-default
+    cp ${WORKDIR}/plc-dev/plc4trucksduck/src/pru/generated/plc4trucksduck_bitbang.out ${D}/usr/lib/firmware/am335x-pru0-fw-bitbang
+    cp ${WORKDIR}/plc-dev/plc4trucksduck/src/pru/generated/plc4trucksduck_j1708.out ${D}/usr/lib/firmware/am335x-pru0-fw-j1708
 
     # user space code (has to be root to access PRU)
+    install -d ${D}/usr/sbin
+    install -m 0755 ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/set-tcat-pru ${D}/usr/sbin/
     install -m 0755 ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/plc4trucksduck_host_c ${D}/usr/bin/plc4trucksduck_host
-    install -m 0755 ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/plc4trucksduck_host_c ${D}/usr/bin/j17084truckduck_host
     
     install -m 0755 ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/plc4trucksduck_host ${D}/usr/bin/plc4trucksduck_host.py
-    install -m 0755 ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/j17084truckduck_host ${D}/usr/bin/j17084truckduck_host.py
     
     # client tools
     install -m 0755 ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/j1708send_c ${D}/usr/bin/j1708send
@@ -50,7 +52,6 @@ do_install(){
 
     # services
     install -d ${D}${systemd_system_unitdir}
-    install -m 0644 ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/j17084truckduck.service ${D}${systemd_system_unitdir}/
     install -m 0644 ${WORKDIR}/plc-dev/plc4trucksduck/src/arm/plc4trucksduck.service ${D}${systemd_system_unitdir}/
 
     # just in case the user wants to force stop the PRU
@@ -58,6 +59,7 @@ do_install(){
 }
 
 FILES:${PN} += "${TARGET_DIR} \
+                /usr/sbin/* \
                 /usr/lib/*"
 FILES:${PN} += "${systemd_system_unitdir}/*.service"
 

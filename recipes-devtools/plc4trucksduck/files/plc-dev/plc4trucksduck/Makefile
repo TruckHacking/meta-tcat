@@ -32,16 +32,19 @@ THIS_DTB_OFILE = $(ARM_BUILD_DIR)/BB-PLC4TRUCKSDUC-00A0.dtbo
 DTB_OFILES = $(THIS_DTB_OFILE) $(PARENT_DTB_OFILE)
 
 # PRU source files, object files, and binaries
-J17084TRUCKDUCK_SOURCES = $(PRU_SRC_DIR)/j17084truckduck.c
-J17084TRUCKDUCK_OFILE = $(PRU_GEN_DIR)/j17084truckduck.out
-
 PLC4TRUCKSDUCK_SOURCES = $(PRU_SRC_DIR)/plc4trucksduck.c
 PLC4TRUCKSDUCK_OFILE = $(PRU_GEN_DIR)/plc4trucksduck.out
 
-PRU_BINS = $(J17084TRUCKDUCK_OFILE) $(PLC4TRUCKSDUCK_OFILE)
+PLC4TRUCKSDUCK_BITBANG_SOURCES = $(PRU_SRC_DIR)/plc4trucksduck_bitbang.c
+PLC4TRUCKSDUCK_BITBANG_OFILE = $(PRU_GEN_DIR)/plc4trucksduck_bitbang.out
+
+PLC4TRUCKSDUCK_J1708_SOURCES = $(PRU_SRC_DIR)/plc4trucksduck_j1708.c
+PLC4TRUCKSDUCK_J1708_OFILE = $(PRU_GEN_DIR)/plc4trucksduck_j1708.out
+
+PRU_BINS = $(PLC4TRUCKSDUCK_OFILE) $(PLC4TRUCKSDUCK_BITBANG_OFILE) $(PLC4TRUCKSDUCK_J1708_OFILE)
 
 # Compiler and linker flags
-STACK_SIZE = $(shell expr 8 + 8 + 8 + 8 + 344)
+STACK_SIZE = $(shell expr 8 + 8 + 8 + 8 + 344 + 438)
 CFLAGS = --c99 -v3 -O1 --endian=little --keep_asm --asm_directory=$(PRU_GEN_DIR) \
 	--obj_directory=$(PRU_GEN_DIR) --pp_directory=$(PRU_GEN_DIR) -ss \
 	--symdebug:none --display_error_number --hardware_mac=on -ppd -ppa --diag_remark=1119
@@ -58,10 +61,10 @@ $(THIS_DTB_OFILE): $(THIS_DTS_SOURCE) | $(ARM_BUILD_DIR)
 	dtc -O dtb -I dts -o $@ -b 0 -@ $<
 
 # PRU compilation and linking
-$(J17084TRUCKDUCK_OFILE): $(J17084TRUCKDUCK_SOURCES) | $(PRU_GEN_DIR)
+$(PLC4TRUCKSDUCK_OFILE): $(PLC4TRUCKSDUCK_SOURCES) | $(PRU_GEN_DIR)
 	$(CLPRU) $(CFLAGS) $(INC) $^ --run_linker $(LFLAGS) $(LIBS) --output_file=$@ -m$(patsubst %.out,%.map,$@)
 
-$(PLC4TRUCKSDUCK_OFILE): $(PLC4TRUCKSDUCK_SOURCES) | $(PRU_GEN_DIR)
+$(PLC4TRUCKSDUCK_BITBANG_OFILE): $(PLC4TRUCKSDUCK_BITBANG_SOURCES) | $(PRU_GEN_DIR)
 	$(CLPRU) $(CFLAGS) $(INC) $^ --run_linker $(LFLAGS) $(LIBS) --output_file=$@ -m$(patsubst %.out,%.map,$@)
 
 # Directory creation
@@ -102,3 +105,5 @@ plc:
 
 j1708:
 	sudo /usr/bin/j17084truckduck_host.py
+$(PLC4TRUCKSDUCK_J1708_OFILE): $(PLC4TRUCKSDUCK_J1708_SOURCES) | $(PRU_GEN_DIR)
+	$(CLPRU) $(CFLAGS) $(INC) $^ --run_linker $(LFLAGS) $(LIBS) --output_file=$@ -m$(patsubst %.out,%.map,$@)
